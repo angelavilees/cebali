@@ -1,0 +1,175 @@
+/* Datos e historia de una parcela. */
+
+.curve {
+  width: 100%;
+  display: block;
+}
+
+.detail-body,
+.prediction-body {
+  padding: 6px 14px 14px;
+}
+
+.detail-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  border-bottom: 1px solid #efeadd;
+  padding: 4px;
+  margin-bottom: 12px;
+  margin: 0 0 12px;
+  background: #eef5e5;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-control);
+}
+
+.detail-tabs button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  font-size: 14px;
+  padding: 6px;
+  color: #526077;
+  border-radius: var(--radius-control);
+  min-height: 46px;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.detail-tabs button.active {
+  background: #fff;
+  color: #07753a;
+  box-shadow: 0 1px 3px #123b3314;
+}
+
+.detail-body h2 {
+  font-size: 19px;
+  margin: 13px 0 9px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.stats-grid .stat {
+  min-height: 89px;
+  padding: 11px 9px;
+  gap: 7px;
+}
+
+.stats-grid .stat svg {
+  width: 26px;
+}
+
+.history-chart {
+  background: white;
+  border-radius: var(--radius-card);
+  padding: 13px 9px;
+  margin-top: 8px;
+}
+
+.history-chart h2 {
+  margin: 0 0 7px;
+  font-size: 18px;
+}
+
+.chart-explanation {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+  padding: 0 3px;
+  margin-bottom: 8px;
+}
+
+.curve text {
+  font-family: Nunito, system-ui;
+  font-size: 12px;
+  fill: #425e55;
+}
+
+.month-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  gap: 8px;
+}
+
+.month-controls button {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-control);
+  background: #edf6e4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #087a39;
+}
+
+.month-controls strong {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.month-controls strong small {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.stats-grid .stat small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.parcel-identity {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 9px 0 10px;
+}
+
+.chart-hint {
+  line-height: 1.45;
+  text-align: center;
+  font-size: 12px;
+  margin: 8px 2px;
+  color: var(--muted);
+}
+
+.stats-grid .stat span {
+  max-width: none;
+  font-size: 11px;
+}
+
+.stats-grid .stat strong {
+  font-size: 20px;
+}
+
+.history-chart > .evidence-disclosure {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.chart-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.chart-heading-actions h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+}

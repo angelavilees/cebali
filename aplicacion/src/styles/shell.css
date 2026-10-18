@@ -1,0 +1,274 @@
+/* Marco del teléfono, cabecera, navegación y distribución. */
+
+.preview {
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient( ellipse at 50% 40%, #e9eedf, #d3dfc6 65%, #bbcbb0 );
+  overflow: hidden;
+}
+
+.phone-size {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.phone {
+  position: relative;
+  width: 393px;
+  height: 800px;
+  transform-origin: top left;
+}
+
+.phone-screen {
+  position: absolute;
+  left: 22px;
+  top: 17px;
+  width: 350px;
+  height: 766px;
+  border: 0;
+  border-radius: 56px;
+  background: var(--paper);
+}
+
+.phone-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.mobile-app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+
+.status-bar {
+  height: 39px;
+  min-height: 39px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 24px 4px;
+  font-size: 12px;
+  font-weight: 900;
+  background: #fffdf7;
+}
+
+.status-right {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.battery {
+  display: block;
+  width: 19px;
+  height: 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  position: relative;
+}
+
+.battery:before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.battery:after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  width: 2px;
+  height: 3px;
+  background: currentColor;
+}
+
+.app-header .icon-button {
+  border-radius: var(--radius-control);
+  margin-left: auto;
+}
+
+.brand-mark {
+  color: #08713a;
+}
+
+.screen-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-anchor: none;
+  scrollbar-width: none;
+}
+
+.screen-content::-webkit-scrollbar {
+  display: none;
+}
+
+.home-indicator {
+  height: 16px;
+  min-height: 16px;
+  position: relative;
+  background: #fffdf8;
+  z-index: 3;
+}
+
+.home-indicator:after {
+  content: "";
+  position: absolute;
+  width: 103px;
+  height: 4px;
+  background: #161813;
+  border-radius: 8px;
+  left: 50%;
+  top: 4px;
+  transform: translateX(-50%);
+}
+
+.screen-parcels .status-bar,
+.screen-parcels .app-header {
+  background: #b4eaff;
+}
+
+.screen-parcels .app-header h1,
+.screen-detail .app-header h1,
+.screen-prediction .app-header h1 {
+  text-align: center;
+  font-size: 24px;
+}
+
+@media (min-width: 601px) {
+  .mobile-app {
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .mobile-app {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .status-bar {
+    padding-top: env(safe-area-inset-top, 10px);
+  }
+  .home-indicator {
+    height: max(16px, env(safe-area-inset-bottom));
+    min-height: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.app-header {
+  height: 68px;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  padding: 2px 14px 8px;
+  gap: 7px;
+  background: #fffdf7;
+  z-index: 1;
+}
+
+.app-header h1 {
+  font-size: 22px;
+  letter-spacing: -0.8px;
+  font-weight: 900;
+  flex: 1;
+  line-height: 1.2;
+  min-width: 0;
+  outline: none;
+}
+
+.bottom-nav {
+  height: 70px;
+  min-height: 70px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 4px 10px;
+  background: #fffdf8;
+  border-top: 1px solid #eae9df;
+  z-index: 3;
+}
+
+.bottom-nav > button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-direction: column;
+  color: #647181;
+  font-size: 12px;
+  padding: 3px 2px;
+  white-space: nowrap;
+  min-height: 58px;
+  border-radius: var(--radius-control);
+}
+
+.bottom-nav > button.active {
+  color: #008e3f;
+  font-weight: 900;
+  background: #edf6e4;
+}
+
+.bottom-nav > button.active svg {
+  fill: none;
+  stroke-width: 2.8;
+}
+
+.action-dock {
+  padding: 8px 14px 11px;
+  background: var(--paper);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+@media (max-width: 340px) {
+  .app-header {
+    gap: 4px;
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+  .app-header h1 {
+    font-size: 20px;
+  }
+  .bottom-nav > button {
+    font-size: 11px;
+  }
+}
+
+.header-demo {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+.bottom-nav button.active svg {
+  transform: translateY(-1px) scale(1.07);
+}

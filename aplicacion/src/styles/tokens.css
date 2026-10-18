@@ -1,0 +1,22 @@
+/* Variables compartidas: colores, radios, espaciado y movimiento. */
+
+:root {
+  --ink: #0b102b;
+  font-family: Nunito, system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  --green: #008e3f;
+  --paper: #fffdf5;
+  --radius-card: 18px;
+  --radius-control: 14px;
+  --radius-sheet: 24px;
+  --border-color: #e4e7da;
+  --muted: #4e635d;
+  --space: 14px;
+  --motion-quick: 160ms;
+  --motion-panel: 280ms;
+  --motion-image: 380ms;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-soft: cubic-bezier(.4, 0, .2, 1);
+}

@@ -1,0 +1,157 @@
+/* Ilustraciones de cebada y animaciones de crecimiento. */
+
+.barley-growth {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: barley-emerge 1.2s cubic-bezier(0.22, 1, 0.36, 1) var(--plant-delay) both;
+}
+
+.barley-stem {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: barley-stem-draw 1.05s cubic-bezier(0.22, 1, 0.36, 1) var(--plant-delay) both;
+}
+
+.barley-stem.secondary {
+  animation-delay: calc(var(--plant-delay) + 0.14s);
+}
+
+.barley-leaf {
+  transform-box: fill-box;
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.18, 0.75, 0.3, 1);
+  animation-delay: calc(var(--plant-delay) + var(--leaf-delay));
+  animation-fill-mode: both;
+}
+
+.barley-leaf.left {
+  transform-origin: right bottom;
+  animation-name: barley-leaf-left;
+}
+
+.barley-leaf.right {
+  transform-origin: left bottom;
+  animation-name: barley-leaf-right;
+}
+
+.barley-ear {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: barley-ear-grow 0.8s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--plant-delay) + var(--ear-delay)) both;
+}
+
+.barley-grain {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: barley-kernel-grow 0.42s ease-out calc(var(--plant-delay) + var(--grain-delay)) both;
+}
+
+@keyframes barley-emerge {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes barley-stem-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes barley-leaf-left {
+  from {
+    opacity: 0;
+    transform: scale(0.01) rotate(35deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes barley-leaf-right {
+  from {
+    opacity: 0;
+    transform: scale(0.01) rotate(-35deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes barley-ear-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.01);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes barley-kernel-grow {
+  from {
+    opacity: 0;
+    transform: scale(0.01);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.growth-replay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  min-width: 72px;
+  padding: 5px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #087039;
+  background: #edf6e3;
+  border: 1px solid #dae7cf;
+  border-radius: var(--radius-control);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barley-growth,
+  .barley-leaf,
+  .barley-ear,
+  .barley-grain {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .barley-stem {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+}
+
+.estimate-scene .barley-strip {
+  position: absolute;
+  width: 100%;
+  height: 76px;
+  left: 0;
+  bottom: -1px;
+}
+
+.is-running .estimate-scene .barley-strip {
+  height: 44px;
+}

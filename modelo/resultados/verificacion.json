@@ -1,0 +1,10 @@
+{
+  "estado": "PASS",
+  "parcelas": 59,
+  "diferencia_maxima_prediccion": 5.3290705182007514e-15,
+  "parametros_y_entradas_reproducidos": true,
+  "pruebas_rechazo": 8,
+  "invariancia_orden": true,
+  "K_conocidas": 108,
+  "K_consultas": 50
+}

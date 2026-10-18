@@ -1,0 +1,14 @@
+# Dependencias, compilación y archivos locales
+**/node_modules/
+**/dist/
+**/.vite/
+**/.DS_Store
+**/*.log
+**/*.local
+**/.env
+**/.env.*
+**/.Rhistory
+**/.RData
+**/.Ruserdata
+**/.Rproj.user/
+resultados_nuevos*/

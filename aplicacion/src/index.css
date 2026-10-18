@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* El orden conserva la prioridad de base, componentes, pantallas y movimiento. */
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/shell.css";
+@import "./styles/ui.css";
+@import "./styles/home.css";
+@import "./styles/detail.css";
+@import "./styles/predictions.css";
+@import "./styles/evidence.css";
+@import "./styles/growth.css";
+@import "./styles/rain.css";
+@import "./styles/map.css";
+@import "./styles/motion.css";

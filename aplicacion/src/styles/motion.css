@@ -1,0 +1,243 @@
+/* Transiciones y preferencias de movimiento. */
+
+@keyframes estimate-bob {
+  0%, 100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(3deg);
+  }
+}
+
+@keyframes estimate-drift {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 12px 0;
+  }
+}
+
+.motion-surface {
+  min-height: 100%;
+  animation: surface-enter var(--motion-panel) var(--ease-out);
+}
+
+.screen-parcels .motion-surface {
+  height: 100%;
+}
+
+@keyframes surface-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes soft-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes value-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bottom-nav button svg {
+  transition: transform 220ms var(--ease-out);
+}
+
+.satellite-raster {
+  opacity: 0;
+  transition: opacity var(--motion-image) var(--ease-soft);
+}
+
+.has-imagery .satellite-raster, .parcel-satellite[data-image-ready="true"] .satellite-raster {
+  opacity: 1;
+}
+
+.sector-label {
+  transition: opacity 140ms ease;
+}
+
+.sector-shape {
+  fill: #779766;
+  stroke: #f7f8e6;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  transition: fill 180ms ease, stroke 180ms ease;
+}
+
+.sector-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: soft-reveal 320ms var(--ease-soft);
+}
+
+.parcel-satellite-scene > path {
+  transition: fill 240ms ease;
+}
+
+.modal-shade {
+  position: absolute;
+  inset: 0;
+  background: #14251666;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  backdrop-filter: blur(3px);
+  animation: soft-reveal 180ms ease;
+}
+
+.help-sheet {
+  width: 100%;
+  max-height: calc(100% - 26px);
+  overflow: auto;
+  background: var(--paper);
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  padding: 22px 20px 24px;
+  position: relative;
+  box-shadow: 0 -10px 50px #12372320;
+  animation: sheet-enter 300ms var(--ease-out);
+}
+
+.history-chart, .reading-content, .estimate-step-copy {
+  animation: value-reveal 240ms var(--ease-out);
+}
+
+.estimate-checklist li, .estimate-checklist li > span {
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+.estimate-ready {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 0 16px;
+  margin-top: 12px;
+  animation: value-reveal 240ms var(--ease-out);
+}
+
+.harvest-hero {
+  background: #fff1b9;
+  border: 1px solid #f1df9d;
+  border-radius: var(--radius-card);
+  padding: 19px 16px 12px;
+  margin: 14px 0 12px;
+  animation: value-reveal 360ms var(--ease-out);
+}
+
+.estimate-start {
+  margin: 16px;
+  padding: 24px 18px 18px;
+  border: 1px solid #dce7cf;
+  border-radius: var(--radius-card);
+  background: linear-gradient(165deg, #f1f9df, var(--paper) 65%);
+  text-align: center;
+  animation: value-reveal 280ms var(--ease-out);
+}
+
+.adjustment-track > i {
+  transform-origin: center;
+  animation: adjustment-enter 420ms var(--ease-out);
+}
+
+@keyframes adjustment-enter {
+  from {
+    opacity: .25;
+    transform: scaleX(.2);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rain-explorer > summary > svg {
+  transition: transform 220ms var(--ease-soft);
+}
+
+.rain-yield-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 46px;
+  min-height: 0;
+  padding-top: 7px;
+  color: #fffbd6;
+  border-radius: 11px 11px 0 0;
+  background: #55a567;
+  transition: height 300ms var(--ease-out);
+}
+
+.rain-explorer:not([open]) .rain-falling-drop {
+  animation-play-state: paused;
+}
+
+@supports (interpolate-size: allow-keywords) {
+  details {
+    interpolate-size: allow-keywords;
+  }
+  details::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: clip;
+    transition: block-size 300ms var(--ease-soft), opacity 180ms ease, content-visibility 300ms allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
+@supports (transition-behavior: allow-discrete) {
+  .sector-finder {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 180ms ease, transform 240ms var(--ease-out), display 240ms allow-discrete, overlay 240ms allow-discrete;
+  }
+  .sector-finder::backdrop {
+    opacity: 0;
+    transition: opacity 180ms ease, display 240ms allow-discrete, overlay 240ms allow-discrete;
+  }
+  @starting-style {
+    .sector-finder[open] {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    .sector-finder[open]::backdrop {
+      opacity: 0;
+    }
+  }
+}

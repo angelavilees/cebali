@@ -1,0 +1,11 @@
+# Ejecutar desde Rscript: Rscript ejecutar_por_etapas.R CARPETA_DATOS CARPETA_SALIDA
+args_completos <- commandArgs(FALSE)
+archivo_actual <- sub("^--file=", "", grep("^--file=", args_completos, value = TRUE)[1])
+paquete <- dirname(normalizePath(archivo_actual, mustWork = TRUE))
+archivos <- sort(list.files(file.path(paquete, "etapas"), pattern = "\\.R$", full.names = TRUE))
+stopifnot(length(archivos) == 9L)
+for (archivo in archivos) source(archivo, encoding = "UTF-8")
+source(file.path(paquete, "ejecucion.R"), encoding = "UTF-8")
+argumentos <- commandArgs(TRUE)
+if (length(argumentos) != 2L) stop("Uso: Rscript ejecutar_por_etapas.R CARPETA_DATOS CARPETA_SALIDA")
+ejecutar_modelo(argumentos[1], argumentos[2], paquete)

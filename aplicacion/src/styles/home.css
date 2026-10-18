@@ -1,0 +1,157 @@
+/* Pantalla de inicio. */
+
+.art {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+}
+
+.home-hero {
+  height: 158px;
+  position: relative;
+  background: #dff6ff;
+  overflow: hidden;
+}
+
+.home-hero > .art {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-copy h2 {
+  font-size: 37px;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+
+.home-body {
+  padding: 0 14px 4px;
+}
+
+.conditions {
+  position: relative;
+  margin-top: -8px;
+  padding: 12px 11px 10px;
+  border-radius: var(--radius-card);
+  background: #fff;
+  box-shadow: 0 3px 18px #b4ae8014;
+}
+
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.conditions-grid .stat strong {
+  font-size: 21px;
+}
+
+.conditions-grid .stat span {
+  font-size: 12px;
+}
+
+.conditions-grid .stat {
+  min-height: 59px;
+  padding: 5px 6px;
+  gap: 7px;
+}
+
+.card-heading {
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 8px;
+  gap: 6px;
+}
+
+.section-heading h2 {
+  font-size: 19px;
+}
+
+.section-heading > button {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  color: #0076c5;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 2px;
+  min-width: 79px;
+}
+
+.hero-copy {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  padding: 4px 14px 8px;
+  background: linear-gradient(100deg, #e4f8ff 82%, #e4f8ff00);
+  width: 187px;
+  border-bottom-right-radius: 32px;
+}
+
+.hero-copy p {
+  font-size: 15px;
+  line-height: 1.45;
+  margin-top: 3px;
+  font-weight: 700;
+}
+
+.first-time {
+  margin: 15px 0 18px;
+}
+
+.home-predictions {
+  margin: 12px 0 5px;
+  padding: 11px 13px;
+  justify-content: flex-start;
+  min-height: 76px;
+}
+
+.home-predictions > span:nth-child(2) {
+  flex: 1;
+  text-align: left;
+}
+
+.home-predictions strong {
+  display: block;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.home-predictions small {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e6f7d4;
+  margin-top: 4px;
+  letter-spacing: 0;
+}
+
+.home-predictions-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 43px;
+  width: 43px;
+  flex-shrink: 0;
+  border-radius: var(--radius-control);
+  background: #ffffff24;
+  color: #e6f796;
+}
+
+@media (max-width: 340px) {
+  .home-predictions strong {
+    font-size: 18px;
+  }
+}

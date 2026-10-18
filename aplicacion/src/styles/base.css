@@ -1,0 +1,99 @@
+/* Fuentes, normalización y accesibilidad global. */
+
+@font-face {
+  font-family: Nunito;
+  src: url("/fonts/nunito-400.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url("/fonts/nunito-700.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url("/fonts/nunito-800.ttf") format("truetype");
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Nunito;
+  src: url("/fonts/nunito-900.ttf") format("truetype");
+  font-weight: 900;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #039deb;
+  outline-offset: 3px;
+}
+
+#root {
+  width: 100%;
+  min-height: 100dvh;
+}
+
+svg {
+  flex-shrink: 0;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: -0.5px;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.35;
+  transform: none;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  color: inherit;
+  background: none;
+  touch-action: manipulation;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--motion-quick) var(--ease-out), background-color var(--motion-quick) ease, color var(--motion-quick) ease, box-shadow var(--motion-quick) ease;
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px) scale(.98);
+}
