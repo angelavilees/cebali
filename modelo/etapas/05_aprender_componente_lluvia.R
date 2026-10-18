@@ -1,7 +1,8 @@
-# Etapa 5. Seleccion de la representacion de lluvia y pendiente intramunicipal.
+# Etapa 5. Seleccion de la representacion de lluvia y pendiente dentro de los cinco grupos territoriales fijos.
 aprender_componente_lluvia <- function(d, tr) {
   x <- d$octubre
-  g <- as.character(d$meta$municipio[tr])
+  g <- unname(d$mapa_grupos[as.character(d$meta$municipio[tr])])
+  stopifnot(!anyNA(g))
   y <- d$y[tr]
   stopifnot(all(is.finite(y)), all(is.finite(x)))
   medias_y <- tapply(y, g, mean)

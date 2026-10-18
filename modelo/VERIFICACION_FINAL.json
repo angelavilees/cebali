@@ -1,46 +1,16 @@
 {
   "estado": "PASS",
-  "version_estadistica": "OCT_MIX 1.4.0",
+  "modelo": "OCT_G5",
+  "version": "1.5.0",
+  "revision": "seleccion_59_E22",
+  "fecha": "2026-10-18",
+  "dos_ejecuciones_desde_originales": true,
+  "particiones_externas": 55,
+  "aislamiento_etiquetas": 55,
+  "particiones_calibracion": 15,
   "predicciones": 59,
-  "csv_final_identico_byte_por_byte": true,
-  "md5_csv": "0c1a1bb556ee93d716c76d8b1e12b39a",
-  "archivos_equivalentes_entre_ejecuciones": {
-    "predicciones_59.csv": true,
-    "modelo_oct_mix.rds": true,
-    "entradas_59.rds": true,
-    "validacion_oof.csv": true,
-    "intervalos_validacion.csv": true,
-    "validacion_metricas.csv": true,
-    "cobertura_validacion.csv": true
-  },
-  "ejecucion_aislada_sin_fuentes_historicas": true,
-  "archivos_oficiales_protegidos": 29,
-  "originales_sin_cambios": true,
-  "modelo": {
-    "estado": "PASS",
-    "parcelas": 59,
-    "diferencia_maxima_prediccion": 5.329070518200751e-15,
-    "parametros_y_entradas_reproducidos": true,
-    "pruebas_rechazo": 8,
-    "invariancia_orden": true,
-    "K_conocidas": 108,
-    "K_consultas": 50
-  },
-  "validacion": {
-    "estado": "PASS",
-    "folds_externos": 55,
-    "filas_oof": 1518,
-    "diferencia_maxima_oof": 1.0453859999870474e-12,
-    "tolerancia_numerica_t_ha": 1e-10,
-    "pruebas_aislamiento_etiquetas": 55
-  },
-  "calibracion": {
-    "estado": "PASS",
-    "particiones": 15,
-    "intervalos": 414,
-    "diferencia_maxima": 1.071143174158351e-12,
-    "nominal": 0.8,
-    "pruebas_aislamiento": 15,
-    "intervalos_para_full138_certificados": false
-  }
+  "csv_md5": "dc272ee3ab743c28d1350ac2381f42ee",
+  "equivalencia_R_TS_casos": 295,
+  "riesgo_seleccion_resuelto": false,
+  "intervalos_full138_certificados": false
 }

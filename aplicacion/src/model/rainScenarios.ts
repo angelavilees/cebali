@@ -1,5 +1,5 @@
-import { predictPrepared } from './octMix';
-import type { Estimate, ModelBundle, PreparedInput } from './octMix';
+import { predictPrepared } from './octG5';
+import type { Estimate, ModelBundle, PreparedInput } from './octG5';
 
 export type RainSupport = {
   version: string;
@@ -12,7 +12,7 @@ export type RainRange = { min: number; max: number; knownCount: number };
 // Se expresan en mm conservando H, la referencia histórica de la parcela elegida.
 export function rainRange(input: PreparedInput, support: RainSupport): RainRange | null {
   const reference = support.municipalities[input.municipio];
-  if (support.version !== 'OCT_MIX 1.4.0' || support.variable !== 'PCT_OCT'
+  if (support.version !== 'OCT_G5 1.5.0' || support.variable !== 'PCT_OCT'
     || !reference || reference.knownCount < 2 || !Number.isFinite(input.H) || input.H <= 0
     || !Number.isFinite(reference.minPct) || !Number.isFinite(reference.maxPct)
     || reference.maxPct - reference.minPct < 1e-8) return null;

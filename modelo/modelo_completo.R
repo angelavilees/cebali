@@ -1,10 +1,4 @@
-# Cebali: OCT_MIX 1.4.0. Flujo completo desde archivos oficiales.
-# Este archivo contiene las nueve etapas; no carga scripts historicos.
-
-
-# ======================================================================
-# 01_leer_y_unir_datos.R
-# ======================================================================
+# Cebali: OCT_G5 1.5.0. Flujo completo desde archivos oficiales.
 # Etapa 1. Leer los archivos oficiales y unirlos por identificador.
 comprobar_dependencias <- function() {
   paquetes <- c("sf", "terra", "exactextractr", "readr", "tidyselect", "rsample", "jsonlite")
@@ -54,15 +48,13 @@ leer_y_unir_datos <- function(carpeta_datos, carpeta_paquete) {
                      lon = xy[, 1], lat = xy[, 2])
   stopifnot(!anyNA(meta), all(nzchar(meta$municipio)),
             all(is.finite(meta$lon)), all(is.finite(meta$lat)))
-  list(ids = ids, tabla = t, meta = meta, poligonos = p,
+  mapa <- read.csv(file.path(carpeta_paquete, "contratos/grupos_territoriales.csv"))
+  stopifnot(!anyDuplicated(mapa$municipio), setequal(unique(meta$municipio), mapa$municipio))
+  grupos <- setNames(as.character(mapa$grupo), mapa$municipio)
+  list(mapa_grupos = grupos, ids = ids, tabla = t, meta = meta, poligonos = p,
        y = t$RENDIMIENTO_T_HA, entrenamiento = tr, consultas = u,
        carpeta_datos = carpeta_datos, fuentes = requeridos)
 }
-
-
-# ======================================================================
-# 02_extraer_lluvia_octubre.R
-# ======================================================================
 # Etapa 2. Promedios de lluvia sobre el poligono, ponderados por cobertura.
 extraer_lluvia_octubre <- function(d) {
   archivos <- vapply(2022:2025, function(anio) file.path(
@@ -84,11 +76,6 @@ extraer_lluvia_octubre <- function(d) {
   d$fuentes <- c(d$fuentes, archivos)
   d
 }
-
-
-# ======================================================================
-# 03_preparar_trayectoria_planet.R
-# ======================================================================
 # Etapa 3. Filtrar Planet, suavizar NDVI e integrar el verdor sobre la base.
 preparar_trayectoria_planet <- function(d) {
   pro <- file.path(d$carpeta_datos, "PRO_AgroCebada.csv")
@@ -157,11 +144,6 @@ preparar_trayectoria_planet <- function(d) {
   d$fuentes <- c(d$fuentes, pro)
   d
 }
-
-
-# ======================================================================
-# 04_contraste_k_y_distancias.R
-# ======================================================================
 # Etapa 4. Dos vecindades distintas: contraste satelital y cosechas conocidas.
 distancia_km <- function(lon, lat, referencia_lon, referencia_lat) {
   r <- pi / 180
@@ -200,15 +182,11 @@ contraste_k_y_distancias <- function(d) {
   stopifnot(all(is.finite(d$distancias)))
   d
 }
-
-
-# ======================================================================
-# 05_aprender_componente_lluvia.R
-# ======================================================================
-# Etapa 5. Seleccion de la representacion de lluvia y pendiente intramunicipal.
+# Etapa 5. Seleccion de la representacion de lluvia y pendiente dentro de los cinco grupos territoriales fijos.
 aprender_componente_lluvia <- function(d, tr) {
   x <- d$octubre
-  g <- as.character(d$meta$municipio[tr])
+  g <- unname(d$mapa_grupos[as.character(d$meta$municipio[tr])])
+  stopifnot(!anyNA(g))
   y <- d$y[tr]
   stopifnot(all(is.finite(y)), all(is.finite(x)))
   medias_y <- tapply(y, g, mean)
@@ -234,11 +212,6 @@ aprender_componente_lluvia <- function(d, tr) {
        group_mean_y = medias_y, group_mean_z = medias_z,
        correlations = correlaciones, global_z = mean(z[tr]))
 }
-
-
-# ======================================================================
-# 06_aprender_vecinos_y_correccion.R
-# ======================================================================
 # Etapa 6. MIX = media municipal + IDW20; correccion K sobre residuos OOF.
 predecir_base_vecinos <- function(d, tr, consultas) {
   stopifnot(!length(intersect(tr, consultas)), all(is.finite(d$y[tr])))
@@ -292,8 +265,9 @@ aprender_modelo <- function(d, tr = d$entrenamiento, particiones = NULL) {
   conocidas <- data.frame(ID_POLIGONO = d$ids[tr],
     municipio = d$meta$municipio[tr], lon = d$meta$lon[tr],
     lat = d$meta$lat[tr], y = d$y[tr])
-  modelo <- list(type = "OCT_MIX_FINAL", version = "1.4.0",
-    recipe = "0.5J_MO_PICK+0.5MIX_CORR", known = conocidas,
+  modelo <- list(type = "OCT_G5_FINAL", version = "1.5.0",
+    recipe = "0.5J_G5_PICK+0.5MIX_CORR", known = conocidas,
+    group_map = d$mapa_grupos, inherited_groups_history = TRUE,
     J = j[c("variable", "beta", "mean", "sd", "group_mean_y", "group_mean_z")],
     municipal_means = tapply(d$y[tr], d$meta$municipio[tr], mean),
     global_y = mean(d$y[tr]), global_z = j$global_z,
@@ -303,11 +277,6 @@ aprender_modelo <- function(d, tr = d$entrenamiento, particiones = NULL) {
     real = d$y[tr], base_oof = oof, residuo = residuo, K = d$k[tr]),
     correlaciones = j$correlations, particiones = particiones)
 }
-
-
-# ======================================================================
-# 07_predecir_y_exportar.R
-# ======================================================================
 # Etapa 7. Aplicar la receta congelada y guardar resultados trazables.
 preparar_consultas <- function(d, indices = d$consultas) {
   data.frame(ID_POLIGONO = d$ids[indices], municipio = d$meta$municipio[indices],
@@ -336,8 +305,10 @@ predecir_modelo <- function(modelo, datos, registro = NULL) {
   j <- modelo$J
   z <- (x[, j$variable] - j$mean) / j$sd
   g <- as.character(datos$municipio)
-  my <- as.numeric(j$group_mean_y[g])
-  mz <- as.numeric(j$group_mean_z[g])
+  grupo <- unname(modelo$group_map[g])
+  stopifnot(!anyNA(grupo))
+  my <- as.numeric(j$group_mean_y[grupo])
+  mz <- as.numeric(j$group_mean_z[grupo])
   nuevas <- !is.finite(my)
   my[nuevas] <- modelo$global_y
   mz[nuevas] <- modelo$global_z
@@ -361,13 +332,13 @@ predecir_modelo <- function(modelo, datos, registro = NULL) {
   stopifnot(all(is.finite(prediccion)))
   list(predicciones = data.frame(ID_POLIGONO = as.character(datos$ID_POLIGONO),
     RENDIMIENTO_T_HA = as.numeric(prediccion)),
-    componentes = data.frame(ID_POLIGONO = datos$ID_POLIGONO, J = lluvia,
+    componentes = data.frame(ID_POLIGONO = datos$ID_POLIGONO, grupo = grupo, J = lluvia,
       MUN = municipal, IDW20 = idw, K_correction = correccion,
       MIX_CORR = mezcla, K_available = validas))
 }
 
 exportar_resultados <- function(d, ajuste, resultado, salida) {
-  saveRDS(ajuste$modelo, file.path(salida, "modelo_oct_mix.rds"))
+  saveRDS(ajuste$modelo, file.path(salida, "modelo_oct_g5.rds"))
   saveRDS(preparar_consultas(d), file.path(salida, "entradas_59.rds"))
   saveRDS(d, file.path(salida, "datos_preparados.rds"))
   tablas <- list(predicciones_59 = resultado$predicciones,
@@ -379,11 +350,6 @@ exportar_resultados <- function(d, ajuste, resultado, salida) {
     file.path(salida, paste0(nombre, ".csv")), row.names = FALSE)
   invisible(tablas)
 }
-
-
-# ======================================================================
-# 08_comprobar_reproduccion.R
-# ======================================================================
 # Etapa 8. Las referencias solo se leen DESPUES de entrenar y predecir.
 comprobar_reproduccion <- function(d, ajuste, resultado, carpeta_paquete) {
   ref <- file.path(carpeta_paquete, "referencias")
@@ -403,6 +369,7 @@ comprobar_reproduccion <- function(d, ajuste, resultado, carpeta_paquete) {
     isTRUE(all.equal(ajuste$modelo$J, modelo$J, tolerance = 1e-12)),
     isTRUE(all.equal(ajuste$modelo$correction, modelo$correction, tolerance = 1e-12)),
     identical(ajuste$modelo$known, modelo$known),
+    identical(ajuste$modelo$group_map, modelo$group_map),
     identical(ajuste$modelo$municipal_means, modelo$municipal_means),
     identical(ajuste$modelo$global_y, modelo$global_y),
     delta < 1e-12)
@@ -428,11 +395,6 @@ comprobar_reproduccion <- function(d, ajuste, resultado, carpeta_paquete) {
        invariancia_orden = TRUE, K_conocidas = sum(is.finite(d$k[d$entrenamiento])),
        K_consultas = sum(is.finite(d$k[d$consultas])))
 }
-
-
-# ======================================================================
-# 09_validacion_fuera_de_muestra.R
-# ======================================================================
 # Etapa 9. Reejecutar SOLO esta receta en 50 folds locales y 5 espaciales fijos.
 validacion_fuera_de_muestra <- function(d, carpeta_paquete, salida) {
   ruta <- file.path(carpeta_paquete, "contratos")
@@ -500,7 +462,9 @@ validacion_fuera_de_muestra <- function(d, carpeta_paquete, salida) {
     data.frame(escenario = z$escenario[1], parcelas_unicas = length(unique(z$ID_POLIGONO)),
       filas_oof = nrow(z), RMSE_media_repeticiones = mean(rmse_repeticion),
       RMSE_pooled = sqrt(sum(z$peso * error^2) / sum(z$peso)),
-      MAE = sum(z$peso * abs(error)) / sum(z$peso))
+      MAE = sum(z$peso * abs(error)) / sum(z$peso),
+      R2_ponderado_pooled = 1 - sum(z$peso * error^2) /
+        sum(z$peso * (z$real - weighted.mean(z$real, z$peso))^2))
   }))
   write.csv(oof, file.path(salida, "validacion_oof.csv"), row.names = FALSE)
   write.csv(resumen, file.path(salida, "validacion_metricas.csv"), row.names = FALSE)
@@ -573,8 +537,6 @@ calibrar_intervalos <- function(d, carpeta_paquete, salida) {
     pretty = TRUE, digits = 16)
   resumen
 }
-
-
 # Coordinacion de las nueve etapas. No se instalan paquetes ni se sobreescriben salidas.
 ejecutar_modelo <- function(carpeta_datos, salida, carpeta_paquete) {
   stopifnot(dir.exists(carpeta_datos), !file.exists(salida))
@@ -612,9 +574,8 @@ ejecutar_modelo <- function(carpeta_datos, salida, carpeta_paquete) {
   invisible(list(datos = d, ajuste = ajuste, predicciones = resultado,
                  metricas = metricas, cobertura = cobertura))
 }
-
-# Entrada de linea de comandos del archivo integrado.
-archivo_actual <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1])
+args_completos <- commandArgs(FALSE)
+archivo_actual <- sub("^--file=", "", grep("^--file=", args_completos, value = TRUE)[1])
 paquete <- dirname(normalizePath(archivo_actual, mustWork = TRUE))
 argumentos <- commandArgs(TRUE)
 if (length(argumentos) != 2L) stop("Uso: Rscript modelo_completo.R CARPETA_DATOS CARPETA_SALIDA")

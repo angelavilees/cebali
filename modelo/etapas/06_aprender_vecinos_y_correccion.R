@@ -51,8 +51,9 @@ aprender_modelo <- function(d, tr = d$entrenamiento, particiones = NULL) {
   conocidas <- data.frame(ID_POLIGONO = d$ids[tr],
     municipio = d$meta$municipio[tr], lon = d$meta$lon[tr],
     lat = d$meta$lat[tr], y = d$y[tr])
-  modelo <- list(type = "OCT_MIX_FINAL", version = "1.4.0",
-    recipe = "0.5J_MO_PICK+0.5MIX_CORR", known = conocidas,
+  modelo <- list(type = "OCT_G5_FINAL", version = "1.5.0",
+    recipe = "0.5J_G5_PICK+0.5MIX_CORR", known = conocidas,
+    group_map = d$mapa_grupos, inherited_groups_history = TRUE,
     J = j[c("variable", "beta", "mean", "sd", "group_mean_y", "group_mean_z")],
     municipal_means = tapply(d$y[tr], d$meta$municipio[tr], mean),
     global_y = mean(d$y[tr]), global_z = j$global_z,

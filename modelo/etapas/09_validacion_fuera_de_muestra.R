@@ -65,7 +65,9 @@ validacion_fuera_de_muestra <- function(d, carpeta_paquete, salida) {
     data.frame(escenario = z$escenario[1], parcelas_unicas = length(unique(z$ID_POLIGONO)),
       filas_oof = nrow(z), RMSE_media_repeticiones = mean(rmse_repeticion),
       RMSE_pooled = sqrt(sum(z$peso * error^2) / sum(z$peso)),
-      MAE = sum(z$peso * abs(error)) / sum(z$peso))
+      MAE = sum(z$peso * abs(error)) / sum(z$peso),
+      R2_ponderado_pooled = 1 - sum(z$peso * error^2) /
+        sum(z$peso * (z$real - weighted.mean(z$real, z$peso))^2))
   }))
   write.csv(oof, file.path(salida, "validacion_oof.csv"), row.names = FALSE)
   write.csv(resumen, file.path(salida, "validacion_metricas.csv"), row.names = FALSE)

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import Icon from './Icons';
 import { parcels } from './data/catalog';
 import type { Parcel } from './data/catalog';
-import type { Estimate } from './model/octMix';
+import type { Estimate } from './model/octG5';
 
 export default function FichaDownload({ parcel, estimate }: { parcel: Parcel; estimate: Estimate | null }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -21,7 +21,7 @@ export default function FichaDownload({ parcel, estimate }: { parcel: Parcel; es
       const review = support?.priorityReview
         ? support.climateSupportIncomplete
           ? 'Faltan cosechas conocidas que compartan los datos de lluvia de esta parcela.'
-          : 'Solo tenemos una cosecha conocida de este municipio para comparar.'
+          : 'Hay una sola cosecha conocida en este municipio; también usamos referencias de su zona.'
         : null;
       const doc = createParcelFicha({ parcel, estimate,
         reference: references.length ? { count: references.length,

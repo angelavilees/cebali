@@ -2,6 +2,8 @@
 
 Estimación del rendimiento de cebada de temporal y consulta visual de parcelas para el **Reto AgroCebada FIRA 2026**.
 
+**Modelo incluido:** OCT_G5 1.5.0. Esta revisión actualiza el código y el modelo; el despliegue de esta revisión en Cloudflare se realiza por separado.
+
 **Aplicación disponible:** [cebali.pages.dev](https://cebali.pages.dev/).
 
 El proyecto trabaja con 197 parcelas de Hidalgo, Puebla y Tlaxcala: 138 cosechas conocidas y 59 parcelas del conjunto de predicción, del ciclo 2025. El modelo estima toneladas por hectárea; la aplicación calcula además la producción total aproximada a partir de la superficie.
@@ -69,10 +71,13 @@ Abre la dirección que muestre Vite. La aplicación no requiere R, servidor de m
 Desde `aplicacion/`:
 
 ```sh
+npm test
 npm run build
 npm run lint
 npm run preview
 ```
+
+`npm test` compara la inferencia con 295 casos calculados en R, comprueba el catálogo, el simulador y las 197 fichas PDF. El motor no utiliza esas respuestas para predecir; las pruebas las consultan después del cálculo.
 
 `build` comprueba TypeScript y genera `aplicacion/dist/`. `lint` revisa el código. `preview` permite consultar la compilación de producción localmente. Para publicar en Cloudflare Pages se sube **el contenido de `dist/`**, no el repositorio ni `node_modules/`.
 
@@ -118,6 +123,14 @@ DATASET_RETO_AGRO_2026-2/
 
 BASICO aporta únicamente la columna de identificadores que conserva el orden utilizado al construir particiones internas. Sus mediciones, los mapas de temperatura y los otros meses de precipitación no son necesarios para reconstruir esta receta final. No se deben sustituir archivos por datos de otra campaña.
 
+### Comprobación rápida del artefacto guardado
+
+```sh
+Rscript modelo/comprobar_inferencia.R
+```
+
+No requiere los TIFF originales: comprueba la inferencia de las 59 entradas preparadas, la identidad del modelo y contratos de entrada. No reemplaza la reproducción completa desde datos originales.
+
 ### Ejecución por etapas
 
 Desde la raíz del repositorio:
@@ -138,6 +151,14 @@ Rscript modelo/modelo_completo.R "/ruta/DATASET_RETO_AGRO_2026-2" "/ruta/otros_r
 
 Es otra forma de ejecutar **el mismo modelo**. Conserva `contratos/` y `referencias/` junto al script. Las dos opciones producen resultados equivalentes; no es necesario ejecutar ambas para utilizar el proyecto.
 
+### Exportar parámetros y referencias para comprobar el navegador
+
+```sh
+Rscript modelo/exportar_inferencia_app.R "/ruta/exportacion_nueva"
+```
+
+Genera `oct-g5-runtime.json` y `referencias_R.json` desde los artefactos de este repositorio. La carpeta indicada debe ser nueva. El primero coincide con el bundle de `aplicacion/src/model/`; el segundo contiene los 295 casos de `aplicacion/pruebas/`. El motor de producción carga únicamente los parámetros y entradas; el archivo de respuestas R queda fuera de `src/` y no se incluye en la compilación.
+
 ### Etapas
 
 | Archivo en `modelo/etapas/` | Función |
@@ -146,7 +167,7 @@ Es otra forma de ejecutar **el mismo modelo**. Conserva `contratos/` y `referenc
 | `02_extraer_lluvia_octubre.R` | Extraer octubre 2022–2025 por cobertura de polígonos |
 | `03_preparar_trayectoria_planet.R` | Filtrar, suavizar e integrar la trayectoria NDVI |
 | `04_contraste_k_y_distancias.R` | Construir K y distancias entre centroides |
-| `05_aprender_componente_lluvia.R` | Seleccionar representación climática y aprender ajuste municipal |
+| `05_aprender_componente_lluvia.R` | Seleccionar representación climática y aprender ajuste territorial |
 | `06_aprender_vecinos_y_correccion.R` | Aprender referencias cercanas y corrección residual |
 | `07_predecir_y_exportar.R` | Calcular y exportar las 59 estimaciones |
 | `08_comprobar_reproduccion.R` | Contrastar cálculo, entradas y modelo con las referencias |
@@ -156,16 +177,18 @@ Es otra forma de ejecutar **el mismo modelo**. Conserva `contratos/` y `referenc
 
 ## 4. Modelo final y variables
 
-**OCT_MIX 1.4.0, cierre conservador.** Combina:
+**OCT_G5 1.5.0, elección para las 59 consultas tras las comprobaciones del 18 de octubre.** Combina:
 
 ```text
-J = media municipal de rendimiento + ajuste lineal por lluvia de octubre
+J = media del grupo territorial + ajuste lineal por lluvia de octubre
 MIX = 0.5 × media municipal + 0.5 × IDW20
 MIX_CORR = MIX + corrección_K
 Predicción = 0.5 × J + 0.5 × MIX_CORR
 ```
 
-- **J:** selecciona dentro del entrenamiento entre P, H, P−H y 100(P−H)/H, mediante correlación absoluta después de centrar por municipio. P es lluvia de octubre 2025 y H es la media de octubre 2022–2024. Aprende una pendiente común y niveles municipales. El ajuste completo eligió diferencia porcentual. Si no hay referencias municipales en un entrenamiento, utiliza las medias globales previstas en el código.
+- **J:** selecciona dentro del entrenamiento entre P, H, P−H y 100(P−H)/H, mediante correlación absoluta después de centrar por grupo territorial. P es lluvia de octubre 2025 y H es la media de octubre 2022–2024. Aprende una pendiente común y niveles de cinco grupos territoriales. El ajuste completo eligió diferencia porcentual. Si no hay referencias de un grupo o municipio en un entrenamiento, utiliza las medias globales previstas en el código.
+Los grupos territoriales fijos son Almoloya, Chignahuapan, Singuilucan, Tlaxcala y Otros_Hidalgo. Su mapa se incluye en `modelo/contratos/grupos_territoriales.csv`. La agrupación procede del antecedente público [netfoor, notebook 04, commit 820b173](https://github.com/netfoor/Reto-AgroCebada-FIRA-2026/tree/820b173e1d07fd54c0f388eee0ca485ac7210b54). Los coeficientes se vuelven a aprender en cada entrenamiento; eso no elimina la exposición histórica de la agrupación ni el riesgo de selección.
+
 - **IDW20:** promedio de las 20 cosechas conocidas más cercanas del entrenamiento, con pesos `1/max(distancia_m, 1)^2`. Utiliza distancia haversine y desempate por identificador.
 - **K:** integral de verdor Planet propia menos la mediana de al menos dos vecinas válidas a distancia mayor que cero y menor de 1 km. Usa las mediciones disponibles de las 197 parcelas, incluidas las consultas, sin sus rendimientos ocultos. No es la misma vecindad que IDW20.
 - **Corrección_K:** regresión regularizada, sin intercepto y con penalización fija 10, sobre K estandarizado y errores de MIX obtenidos en particiones internas fuera de muestra. Con K ausente se aplica corrección cero, sin inventar valores. Ocurre en nueve de las 59 consultas.
@@ -178,12 +201,16 @@ Temperatura, relieve, curva Sentinel-2 y superficie se muestran como contexto; n
 
 | Evaluación del modelo final | RMSE (t/ha) | MAE (t/ha) |
 | --- | ---: | ---: |
-| Local: cinco particiones, diez repeticiones | 0.477100 | 0.325196 |
-| Espacial estricta: cinco particiones | 0.702958 | 0.562021 |
+| Local: cinco particiones, diez repeticiones | 0.474087 | 0.323841 |
+| Espacial estricta: cinco particiones | 0.706840 | 0.564809 |
 
-Ambas métricas se ponderan por la composición municipal de las 59 consultas. El RMSE local principal es el promedio de los diez RMSE globales por repetición. La prueba espacial reúne las predicciones externas antes de calcular el error. Las repeticiones no generan nuevas parcelas independientes: siguen siendo 138 cosechas conocidas.
+RMSE y MAE se ponderan por la composición municipal de las 59 consultas. El RMSE local principal es el promedio de los diez RMSE globales por repetición. La prueba espacial reúne las predicciones externas antes de calcular el error. Las repeticiones no generan nuevas parcelas independientes: siguen siendo 138 cosechas conocidas.
 
-Cada evaluación vuelve a aprender sus referencias, escalas, selección de lluvia y correcciones dentro del entrenamiento. Los grupos espaciales conectan parcelas por celdas climáticas compartidas y se separan completos. Los intervalos nominales del 80% se comprueban en particiones con entrenamiento, calibración y evaluación separados, midiendo cobertura y amplitud. No se presentan como intervalos individuales certificados para el ajuste completo de las 59 consultas.
+R² ponderado agrupado: **0.699464 local** y **0.331999 espacial**. No son porcentajes de precisión.
+
+En 100 divisiones estratificadas 103/35 y 100 aleatorias, el RMSE fue 0.474747 y 0.473307. Frente a la versión municipal se obtuvo menor RMSE en 81 de las 100 divisiones de cada batería. La mejora principal fue de aproximadamente 0.63%; las divisiones reutilizan los mismos 138 rendimientos. La elección prioriza las 59 consultas representadas, sin afirmar superioridad universal.
+
+Cada evaluación vuelve a aprender sus referencias, escalas, selección de lluvia y correcciones dentro del entrenamiento. Los grupos espaciales conectan parcelas por celdas climáticas compartidas y se separan completos. Los intervalos nominales del 80% se comprueban en particiones con entrenamiento, calibración y evaluación separados, midiendo cobertura y amplitud. Cobertura ponderada observada: **85.23% local y 70.87% espacial**; anchuras medias 1.229124 y 1.750185 t/ha. La menor cobertura espacial es una limitación declarada de transferencia. No se presentan como intervalos individuales certificados para el ajuste completo de las 59 consultas.
 
 Estos resultados corresponden a una receta elegida después de explorar alternativas sobre las mismas etiquetas; no constituyen un test independiente de toda la búsqueda. El error de las 59 parcelas sigue desconocido y no se ha demostrado generalización a otros años ni pronóstico anterior a octubre.
 
@@ -199,11 +226,11 @@ Los JSON registran comprobaciones de las corridas archivadas. El ejecutor vuelve
 
 ## 6. Predicciones y objetos guardados
 
-El CSV final está en [`modelo/resultados/predicciones_59.csv`](modelo/resultados/predicciones_59.csv), con las columnas `ID_POLIGONO` y `RENDIMIENTO_T_HA`. Coincide byte por byte con el CSV del modelo final vigente; MD5 `0c1a1bb556ee93d716c76d8b1e12b39a`.
+El CSV final está en [`modelo/resultados/predicciones_59.csv`](modelo/resultados/predicciones_59.csv), con las columnas `ID_POLIGONO` y `RENDIMIENTO_T_HA`. Coincide byte por byte con el CSV del modelo final vigente; MD5 `dc272ee3ab743c28d1350ac2381f42ee`.
 
 En `modelo/resultados/` también se conservan:
 
-- `modelo_oct_mix.rds`: modelo aprendido y referencias.
+- `modelo_oct_g5.rds`: modelo aprendido y referencias.
 - `entradas_59.rds`: consultas preparadas.
 - `datos_preparados.rds`: tablas y estructuras intermedias para inspección.
 - `componentes_59.csv`: descomposición del cálculo.
@@ -214,9 +241,9 @@ No son las 59 cosechas reales: son resultados del modelo y datos preparados.
 
 ## 7. Cálculo e interpretación en Cebali
 
-`aplicacion/src/model/octMix.ts` reproduce la inferencia con los parámetros y referencias de `oct-mix-runtime.json`, cargados al solicitar el cálculo. Este archivo de ejecución contiene las 138 referencias y las 59 entradas; no las respuestas finales de estas últimas. El catálogo visual conserva resultados de referencia por separado.
+`aplicacion/src/model/octG5.ts` reproduce la inferencia con los parámetros y referencias de `oct-g5-runtime.json`, cargados al solicitar el cálculo. Este archivo de ejecución contiene las 138 referencias y las 59 entradas; no las respuestas finales de estas últimas. El catálogo visual conserva resultados de referencia por separado. La base mostrada combina por mitades la media territorial y la media municipal; lluvia, proximidad y K se descomponen respecto a esa base, y su suma reproduce la estimación. No se presenta esa base como una media municipal pura.
 
-La portabilidad a TypeScript se comprobó contra R en 295 casos: las 59 consultas originales y variantes de datos ausentes o lluvia modificada. La discrepancia máxima observada fue 5.33×10⁻¹⁵ t/ha, con tolerancia absoluta de 10⁻¹². Esta equivalencia del cálculo no mide exactitud frente a los rendimientos ocultos.
+La portabilidad a TypeScript se comprobó contra R en 295 casos: las 59 consultas originales y variantes de datos ausentes o lluvia modificada. Todas las diferencias quedaron por debajo de la tolerancia absoluta de 10⁻¹² t/ha. Esta equivalencia del cálculo no mide exactitud frente a los rendimientos ocultos.
 
 **Explora tu estimación** modifica únicamente lluvia de octubre dentro del rango municipal preparado. Mantiene las demás entradas y ejecuta la misma ecuación; no altera la estimación original, el CSV o la ficha PDF. Representa sensibilidad del cálculo, no el efecto causal de modificar la lluvia ni otra campaña. No se habilita sin referencias suficientes.
 
@@ -230,10 +257,18 @@ El mapa y las cabeceras usan contornos del SHP oficial en EPSG:32614 y nueve rec
 
 Contiene datos Copernicus Sentinel modificados, 2025, obtenidos del [archivo abierto Sentinel-2 L2A / Earth Search](https://registry.opendata.aws/sentinel-2-l2a-cogs/), escenas `S2B_14QNG_20251027_0_L2A` y `S2B_14QNH_20251027_0_L2A`, consultadas el 17 de octubre de 2026. La procedencia y georreferenciación constan en `aplicacion/src/data/parcel-imagery.json`. La captura es referencia visual, no nueva entrada del modelo. Los recursos se sirven localmente, sin API ni teselas externas.
 
-Las fuentes Nunito están incluidas localmente; el marco del teléfono y la ilustración de bienvenida también. Los recursos visuales anteriores sustituidos se retiraron del código publicable.
+Las fuentes Nunito están incluidas localmente, al igual que el marco del teléfono y las ilustraciones utilizadas por la interfaz. Se retiraron los recursos del scaffolding que ya no se utilizan.
 
 ## 9. Documentación complementaria de la entrega
 
 Las bases solicitan identificar el uso de inteligencia artificial e incluir sus prompts en el escrito, además de las aportaciones de cada integrante en anexos. Hubo apoyo de IA en programación, exploración, revisión y documentación; su declaración y los prompts utilizados deben acompañar el informe técnico, sin sustituir la revisión del equipo.
 
-Este repositorio se prepara privado para revisión del equipo. Antes de entregar, el código y la aplicación deben quedar accesibles al jurado mediante el mecanismo elegido. Publicar código no sustituye el envío del informe, bibliografía, anexos, video y CSV por los medios indicados por el Comité Organizador.
+Este repositorio se mantiene privado para revisión del equipo. Antes de entregar, el código y la aplicación deben quedar accesibles al jurado mediante el mecanismo elegido. Publicar código no sustituye el envío del informe, bibliografía, anexos, video y CSV por los medios indicados por el Comité Organizador.
+
+## 10. Integridad y alcance de la carpeta
+
+La revisión contiene una sola receta: OCT_G5 1.5.0. No hay scripts de selección de candidatos ni dependencias del workspace de investigación. Los archivos de `referencias/` y los casos R verifican el resultado después del cálculo. Los TIFF originales se indican mediante el argumento de ejecución y no se redistribuyen.
+
+`modelo/COMPROBACION_PAQUETE.json` registra la revisión de rutas, artefactos y correspondencia con el navegador. `modelo/SHA256.json` identifica los archivos del modelo. Las rutas de la corrida archivada están expresadas como `DATOS/` y `modelo/`; no se requiere esa ruta literal para ejecutar: el argumento del comando decide dónde leer los datos.
+
+La investigación previa y la exposición de la agrupación territorial se declaran como limitaciones metodológicas, no se borran del relato. El historial Git conserva las revisiones anteriores, aunque no forman parte del árbol de archivos actual.

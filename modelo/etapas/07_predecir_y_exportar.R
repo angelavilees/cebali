@@ -26,8 +26,10 @@ predecir_modelo <- function(modelo, datos, registro = NULL) {
   j <- modelo$J
   z <- (x[, j$variable] - j$mean) / j$sd
   g <- as.character(datos$municipio)
-  my <- as.numeric(j$group_mean_y[g])
-  mz <- as.numeric(j$group_mean_z[g])
+  grupo <- unname(modelo$group_map[g])
+  stopifnot(!anyNA(grupo))
+  my <- as.numeric(j$group_mean_y[grupo])
+  mz <- as.numeric(j$group_mean_z[grupo])
   nuevas <- !is.finite(my)
   my[nuevas] <- modelo$global_y
   mz[nuevas] <- modelo$global_z
@@ -51,13 +53,13 @@ predecir_modelo <- function(modelo, datos, registro = NULL) {
   stopifnot(all(is.finite(prediccion)))
   list(predicciones = data.frame(ID_POLIGONO = as.character(datos$ID_POLIGONO),
     RENDIMIENTO_T_HA = as.numeric(prediccion)),
-    componentes = data.frame(ID_POLIGONO = datos$ID_POLIGONO, J = lluvia,
+    componentes = data.frame(ID_POLIGONO = datos$ID_POLIGONO, grupo = grupo, J = lluvia,
       MUN = municipal, IDW20 = idw, K_correction = correccion,
       MIX_CORR = mezcla, K_available = validas))
 }
 
 exportar_resultados <- function(d, ajuste, resultado, salida) {
-  saveRDS(ajuste$modelo, file.path(salida, "modelo_oct_mix.rds"))
+  saveRDS(ajuste$modelo, file.path(salida, "modelo_oct_g5.rds"))
   saveRDS(preparar_consultas(d), file.path(salida, "entradas_59.rds"))
   saveRDS(d, file.path(salida, "datos_preparados.rds"))
   tablas <- list(predicciones_59 = resultado$predicciones,

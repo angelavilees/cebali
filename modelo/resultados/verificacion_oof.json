@@ -2,7 +2,7 @@
   "estado": "PASS",
   "folds_externos": 55,
   "filas_oof": 1518,
-  "diferencia_maxima_oof": 1.0453859999870474e-12,
+  "diferencia_maxima_oof": 1.0507150705052481e-12,
   "tolerancia_numerica_t_ha": 1e-10,
   "pruebas_aislamiento_etiquetas": 55
 }

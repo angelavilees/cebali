@@ -1,13 +1,14 @@
 {
   "name": "cebali",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node pruebas/comprobar.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.1",

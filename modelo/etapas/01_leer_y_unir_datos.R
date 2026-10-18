@@ -47,7 +47,10 @@ leer_y_unir_datos <- function(carpeta_datos, carpeta_paquete) {
                      lon = xy[, 1], lat = xy[, 2])
   stopifnot(!anyNA(meta), all(nzchar(meta$municipio)),
             all(is.finite(meta$lon)), all(is.finite(meta$lat)))
-  list(ids = ids, tabla = t, meta = meta, poligonos = p,
+  mapa <- read.csv(file.path(carpeta_paquete, "contratos/grupos_territoriales.csv"))
+  stopifnot(!anyDuplicated(mapa$municipio), setequal(unique(meta$municipio), mapa$municipio))
+  grupos <- setNames(as.character(mapa$grupo), mapa$municipio)
+  list(mapa_grupos = grupos, ids = ids, tabla = t, meta = meta, poligonos = p,
        y = t$RENDIMIENTO_T_HA, entrenamiento = tr, consultas = u,
        carpeta_datos = carpeta_datos, fuentes = requeridos)
 }

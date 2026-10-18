@@ -2,7 +2,7 @@
   "estado": "PASS",
   "particiones": 15,
   "intervalos": 414,
-  "diferencia_maxima": 1.071143174158351e-12,
+  "diferencia_maxima": 1.1315393066979595e-12,
   "nominal": 0.80000000000000004,
   "pruebas_aislamiento": 15,
   "intervalos_para_full138_certificados": false

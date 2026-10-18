@@ -5,14 +5,14 @@ import Icon from './Icons';
 import type { IconName } from './Icons';
 import BarleyPlants from './BarleyPlants';
 import type { Parcel } from './data/catalog';
-import type { CalculationStage, Estimate, FactorKey, ModelBundle } from './model/octMix';
+import type { CalculationStage, Estimate, FactorKey, ModelBundle } from './model/octG5';
 
 const fmt = (n: number, digits = 2) => n.toLocaleString('es-MX', {
   minimumFractionDigits: digits, maximumFractionDigits: digits,
 });
 const steps: { key: CalculationStage; icon: IconName; title: string; copy: string }[] = [
   { key: 'inputs', icon: 'map', title: 'Revisamos tu parcela', copy: 'Usamos sus mediciones preparadas del ciclo 2025.' },
-  { key: 'rain', icon: 'drop', title: 'Comparamos la lluvia', copy: 'Relacionamos la lluvia de octubre con las cosechas de tu municipio.' },
+  { key: 'rain', icon: 'drop', title: 'Comparamos la lluvia', copy: 'Relacionamos la lluvia de octubre con las cosechas conocidas de tu zona.' },
   { key: 'neighbors', icon: 'pin', title: 'Miramos cosechas cercanas', copy: 'Las parcelas más próximas tienen más peso en esta parte del cálculo.' },
   { key: 'crop', icon: 'leaf', title: 'Revisamos la señal del cultivo', copy: 'Cuando hay datos, ajustamos la cifra con las imágenes de tu parcela y su entorno.' },
 ];
@@ -45,7 +45,7 @@ export default function PredictionExperience({ parcel, children }: {
     });
     try {
       const [engine, data] = await Promise.all([
-        import('./model/octMix'), import('./model/oct-mix-runtime.json'),
+        import('./model/octG5'), import('./model/oct-g5-runtime.json'),
       ]);
       if (active.signal.aborted) return;
       const calculation = engine.estimateParcel(data.default as unknown as ModelBundle, parcel.id);
@@ -125,11 +125,11 @@ export function EstimateBreakdown({ estimate: e, parcel }: { estimate: Estimate;
   const largest = ranked[0];
   const largestValue = e.contributions[largest.key];
   const max = Math.max(.005, ...Object.values(e.contributions).map(Math.abs));
-  const delta = e.yield - e.municipalBase;
+  const delta = e.yield - e.referenceBase;
   return <section className="evidence-card estimate-breakdown">
     <h2><Icon name="chart" />¿Qué movió esta estimación?</h2>
-    <p className="evidence-copy">Partimos de las cosechas conocidas de {parcel.municipality} y ajustamos con los datos de tu parcela.</p>
-    <div className="estimate-baseline"><span>Referencia del municipio<small>{e.municipalReferences === 1 ? 'Una sola cosecha conocida' : `${e.municipalReferences} cosechas conocidas`}</small></span><strong>{fmt(e.municipalBase)}<small>t/ha</small></strong></div>
+    <p className="evidence-copy">Combinamos las cosechas de tu zona y de {parcel.municipality}, y ajustamos con los datos de tu parcela.</p>
+    <div className="estimate-baseline"><span>Base de comparación<small>{e.territorialReferences === e.municipalReferences ? `${e.territorialReferences} cosechas conocidas` : `${e.territorialReferences} cosechas en la zona · ${e.municipalReferences} en el municipio`}</small></span><strong>{fmt(e.referenceBase)}<small>t/ha</small></strong></div>
     <p className="adjustment-axis"><span>↓ Baja la cifra</span><span>Sube la cifra ↑</span></p>
     <div className="adjustment-bars">
       {factors.map(f => {
@@ -142,7 +142,7 @@ export function EstimateBreakdown({ estimate: e, parcel }: { estimate: Estimate;
         </div>;
       })}
     </div>
-    <div className="estimate-takeaway"><Icon name={largest.icon} size={28} /><p><strong>{Math.abs(largestValue) < .005 ? 'Los ajustes fueron pequeños' : `${largest.title}: el mayor ajuste`}</strong>{Math.abs(largestValue) < .005 ? 'La estimación queda muy cerca de la referencia del municipio.' : `Fue el ajuste que más ${largestValue > 0 ? 'subió' : 'bajó'} la cifra respecto a esa referencia.`}</p></div>
-    <p className="reading-interpretation">Con todos los ajustes, la estimación queda en <strong>{fmt(e.yield)} t/ha</strong>{Math.abs(delta) < .005 ? ', muy cerca de la referencia municipal.' : `: ${fmt(Math.abs(delta))} ${delta > 0 ? 'más' : 'menos'} que esa referencia.`}</p>
+    <div className="estimate-takeaway"><Icon name={largest.icon} size={28} /><p><strong>{Math.abs(largestValue) < .005 ? 'Los ajustes fueron pequeños' : `${largest.title}: el mayor ajuste`}</strong>{Math.abs(largestValue) < .005 ? 'La estimación queda muy cerca de la base de comparación.' : `Fue el ajuste que más ${largestValue > 0 ? 'subió' : 'bajó'} la cifra respecto a esa referencia.`}</p></div>
+    <p className="reading-interpretation">Con todos los ajustes, la estimación queda en <strong>{fmt(e.yield)} t/ha</strong>{Math.abs(delta) < .005 ? ', muy cerca de la base de comparación.' : `: ${fmt(Math.abs(delta))} ${delta > 0 ? 'más' : 'menos'} que esa referencia.`}</p>
   </section>;
 }

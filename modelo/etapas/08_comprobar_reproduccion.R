@@ -17,6 +17,7 @@ comprobar_reproduccion <- function(d, ajuste, resultado, carpeta_paquete) {
     isTRUE(all.equal(ajuste$modelo$J, modelo$J, tolerance = 1e-12)),
     isTRUE(all.equal(ajuste$modelo$correction, modelo$correction, tolerance = 1e-12)),
     identical(ajuste$modelo$known, modelo$known),
+    identical(ajuste$modelo$group_map, modelo$group_map),
     identical(ajuste$modelo$municipal_means, modelo$municipal_means),
     identical(ajuste$modelo$global_y, modelo$global_y),
     delta < 1e-12)

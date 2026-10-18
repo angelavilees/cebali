@@ -932,8 +932,8 @@ export default function MobileApp() {
                   </span>
                 </div>
                 <p>
-                  Juntamos dos referencias: la lluvia y las cosechas del
-                  municipio, y las cosechas cercanas con las imágenes del
+                  Juntamos dos referencias: la lluvia y las cosechas de la
+                  zona, y las cosechas del municipio y cercanas con las imágenes del
                   cultivo. Las dos cuentan por igual. La cifra final puede
                   ser distinta de lo que realmente se coseche.
                 </p>

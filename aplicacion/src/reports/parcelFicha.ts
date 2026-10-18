@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import type { Parcel } from '../data/catalog';
-import type { Estimate } from '../model/octMix';
+import type { Estimate } from '../model/octG5';
 
 export type FichaData = {
   parcel: Parcel;
@@ -75,7 +75,7 @@ export function createParcelFicha(data: FichaData, fonts: FichaFonts) {
 
   if (estimated && e) {
     text('¿Qué movió la estimación?', 16, y + 4, 13, true);
-    text(`Referencia municipal: ${number(e.municipalBase)} t/ha`, 16, y + 10, 9, false, colors.muted);
+    text(`Base de comparación: ${number(e.referenceBase)} t/ha`, 16, y + 10, 9, false, colors.muted);
     const rows = [
       { label: 'Lluvia de octubre', value: e.contributions.rain, missing: false },
       { label: 'Cosechas cercanas', value: e.contributions.neighbors, missing: false },
@@ -97,8 +97,8 @@ export function createParcelFicha(data: FichaData, fonts: FichaFonts) {
       text(label, 158, ry, 9, true, row.missing ? colors.muted : colors.ink);
     });
     const top = rows.filter(r => !r.missing).sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0];
-    const explanation = Math.abs(top.value) < .005 ? 'Los ajustes fueron pequeños respecto a la referencia municipal.'
-      : `${top.label} fue el mayor ajuste: ${top.value >= 0 ? 'subió' : 'bajó'} la cifra respecto a la referencia municipal.`;
+    const explanation = Math.abs(top.value) < .005 ? 'Los ajustes fueron pequeños respecto a la base de comparación.'
+      : `${top.label} fue el mayor ajuste: ${top.value >= 0 ? 'subió' : 'bajó'} la cifra respecto a la base de comparación.`;
     const extra = !e.kAvailable ? ' Faltan datos para comparar el cultivo con su entorno.' : '';
     const h = paragraph(explanation + extra, 16, y + 43, 178, 9);
     y += 44 + h;

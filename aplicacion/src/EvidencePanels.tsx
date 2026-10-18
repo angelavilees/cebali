@@ -348,7 +348,7 @@ export function ModelSignals({ parcel }: { parcel: Parcel }) {
   return (
     <section className="support-notice" aria-label="Nota sobre esta estimación">
       <Icon name="help" size={27} />
-      <p><strong>Revisa esta cifra con tu técnico.</strong>{d.climateSupportIncomplete ? "Faltan cosechas conocidas que compartan los datos de lluvia de esta parcela." : "Solo tenemos una cosecha conocida de este municipio para comparar."} La cosecha real puede ser diferente.</p>
+      <p><strong>Revisa esta cifra con tu técnico.</strong>{d.climateSupportIncomplete ? "Faltan cosechas conocidas que compartan los datos de lluvia de esta parcela." : "Hay una sola cosecha conocida en este municipio; también usamos referencias de su zona."} La cosecha real puede ser diferente.</p>
     </section>
   );
 }
@@ -362,7 +362,7 @@ export function ModelStory({ parcel }: { parcel: Parcel }) {
       <div className="model-training"><Icon name="map" size={30} /><strong>Aprendemos de cosechas conocidas</strong></div>
       <div className="story-arrow" aria-hidden="true">↓</div>
       <div className="model-branches">
-        <div><Icon name="drop" size={34} /><b>Miramos la lluvia</b><span>La lluvia de octubre y las cosechas de tu municipio.</span></div>
+        <div><Icon name="drop" size={34} /><b>Miramos la lluvia</b><span>La lluvia de octubre y las cosechas conocidas de tu zona.</span></div>
         <div><Icon name="leaf" size={34} /><b>Miramos tu zona</b><span>{info && !info.kAvailable ? "Aquí usamos las cosechas cercanas. Faltan imágenes para comparar el cultivo." : "Las cosechas cercanas y las imágenes del cultivo, cuando hay datos."}</span></div>
       </div>
       <p className="equal-voices">Las dos cuentan por igual.</p>

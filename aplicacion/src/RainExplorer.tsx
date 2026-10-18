@@ -1,10 +1,10 @@
 import { useId, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Icon from './Icons';
-import runtime from './model/oct-mix-runtime.json';
+import runtime from './model/oct-g5-runtime.json';
 import support from './model/rain-support.json';
 import { rainRange, simulateRain } from './model/rainScenarios';
-import type { Estimate, ModelBundle } from './model/octMix';
+import type { Estimate, ModelBundle } from './model/octG5';
 import type { Parcel } from './data/catalog';
 
 const bundle = runtime as unknown as ModelBundle;

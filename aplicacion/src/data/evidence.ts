@@ -1,4 +1,4 @@
-import modelRows from "./model-oct-mix.json";
+import modelRows from "./model-oct-g5.json";
 
 export type Point = [number, number];
 export type ParcelEvidence = {
@@ -42,7 +42,9 @@ export type FinalParcelEvidence = {
   kCorrection: number;
   mix: number;
   kAvailable: boolean;
-  municipalBase: number;
+  referenceBase: number;
+  territorialGroup: string;
+  territorialReferences: number;
   rainAdjustment: number;
   rainOctober: number;
   rainOctoberReference: number;

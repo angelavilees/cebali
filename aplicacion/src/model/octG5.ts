@@ -1,4 +1,4 @@
-// Port literal del modelo OCT_MIX 1.4.0. No ajusta parámetros ni lee predicciones.
+// Port literal del modelo OCT_G5 1.5.0. No ajusta parámetros ni lee predicciones.
 export type PreparedInput = {
   ID_POLIGONO: string; municipio: string; lon: number; lat: number;
   P: number; H: number; K: number | null;
@@ -11,6 +11,7 @@ export type ModelBundle = {
     type: string; version: string; recipe: string; known: KnownParcel[];
     J: { variable: 'P' | 'H' | 'DELTA' | 'PCT'; beta: number; mean: number;
       sd: number; group_mean_y: Record<string, number>; group_mean_z: Record<string, number> };
+    group_map: Record<string, string>;
     municipal_means: Record<string, number>; global_y: number; global_z: number;
     correction: { beta: number; median: number; sd: number; n: number };
   };
@@ -18,9 +19,10 @@ export type ModelBundle = {
 };
 export type FactorKey = 'rain' | 'neighbors' | 'crop';
 export type Estimate = {
-  id: string; yield: number; municipalBase: number;
+  id: string; yield: number; referenceBase: number;
   j: number; municipal: number; idw20: number; kCorrection: number; mix: number;
   kAvailable: boolean; municipalReferences: number; nearestKnownKm: number;
+  territorialGroup: string; territorialReferences: number;
   rainOctober: number; rainReference: number; rainPct: number;
   contributions: Record<FactorKey, number>;
   neighbors: { id: string; distanceKm: number; weight: number; yield: number }[];
@@ -35,7 +37,7 @@ const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFi
 
 export function validateBundle(bundle: ModelBundle) {
   const { model: m, inputs } = bundle;
-  requireOk(m.type === 'OCT_MIX_FINAL' && m.version === '1.4.0', 'Modelo incompatible.');
+  requireOk(m.type === 'OCT_G5_FINAL' && m.version === '1.5.0', 'Modelo incompatible.');
   requireOk(inputs.length === 59 && new Set(inputs.map(x => x.ID_POLIGONO)).size === 59,
     'Registro de parcelas inválido.');
   requireOk(m.known.length === 138 && new Set(m.known.map(x => x.ID_POLIGONO)).size === 138,
@@ -45,6 +47,8 @@ export function validateBundle(bundle: ModelBundle) {
   requireOk(m.known.every(x => finite(x.y) && finite(x.lon) && finite(x.lat)
     && Math.abs(x.lon) <= 180 && Math.abs(x.lat) <= 90 && Boolean(x.municipio)),
   'Referencias no finitas.');
+  requireOk(Boolean(m.group_map) && m.known.every(p => typeof m.group_map[p.municipio] === "string"),
+    "Grupos territoriales inválidos.");
   const j = m.J, k = m.correction;
   requireOk(['P', 'H', 'DELTA', 'PCT'].includes(j.variable)
     && [j.beta, j.mean, j.sd, k.beta, k.median, k.sd, m.global_y, m.global_z].every(finite)
@@ -66,8 +70,9 @@ export function validateInput(bundle: ModelBundle, row: PreparedInput) {
   requireOk(row.municipio === canonical!.municipio
     && Math.max(Math.abs(row.lon - canonical!.lon), Math.abs(row.lat - canonical!.lat)) <= 1e-8,
   'La ubicación no corresponde a esta parcela.');
-  requireOk([m.municipal_means[row.municipio], m.J.group_mean_y[row.municipio],
-    m.J.group_mean_z[row.municipio]].every(finite), 'Faltan referencias municipales.');
+  const group = m.group_map[row.municipio];
+  requireOk(typeof group === "string" && [m.municipal_means[row.municipio],
+    m.J.group_mean_y[group], m.J.group_mean_z[group]].every(finite), "Faltan referencias de la zona.");
 }
 
 export function distanceKm(lon: number, lat: number, rlon: number, rlat: number) {
@@ -83,11 +88,12 @@ export function* estimateSteps(bundle: ModelBundle, row: PreparedInput):
   validateBundle(bundle);
   validateInput(bundle, row);
   const m = bundle.model, j = m.J, mu = row.municipio;
+  const group = m.group_map[mu];
   yield { stage: 'inputs', value: null };
   const rainPct = 100 * (row.P - row.H) / row.H;
   const feature = { P: row.P, H: row.H, DELTA: row.P - row.H, PCT: rainPct }[j.variable];
   const z = (feature - j.mean) / j.sd;
-  const predJ = j.group_mean_y[mu] + j.beta * (z - j.group_mean_z[mu]);
+  const predJ = j.group_mean_y[group] + j.beta * (z - j.group_mean_z[group]);
   const municipal = m.municipal_means[mu];
   yield { stage: 'rain', value: predJ };
   const nearby = m.known.map(p => ({
@@ -104,15 +110,17 @@ export function* estimateSteps(bundle: ModelBundle, row: PreparedInput):
   const mix = .5 * municipal + .5 * idw20 + kCorrection;
   const prediction = .5 * predJ + .5 * mix;
   requireOk(finite(prediction), 'No fue posible obtener una estimación válida.');
-  // Descomposición exacta respecto a la base municipal, no importancia causal ni porcentajes.
-  const municipalBase = .5 * j.group_mean_y[mu] + .5 * municipal;
+  // Descomposición exacta respecto a la base territorial y municipal, no importancia causal ni porcentajes.
+  const referenceBase = .5 * j.group_mean_y[group] + .5 * municipal;
   return {
     id: row.ID_POLIGONO, yield: prediction, j: predJ, municipal, idw20, kCorrection, mix,
-    municipalBase, kAvailable: row.K !== null,
+    referenceBase, kAvailable: row.K !== null,
     municipalReferences: m.known.filter(p => p.municipio === mu).length,
+    territorialGroup: group,
+    territorialReferences: m.known.filter(p => m.group_map[p.municipio] === group).length,
     nearestKnownKm: neighbors[0].distanceKm, neighbors,
     rainOctober: row.P, rainReference: row.H, rainPct,
-    contributions: { rain: .5 * (predJ - j.group_mean_y[mu]),
+    contributions: { rain: .5 * (predJ - j.group_mean_y[group]),
       neighbors: .25 * (idw20 - municipal), crop: .5 * kCorrection },
   };
 }
