@@ -20,18 +20,25 @@ function close(a, b, tolerance = 1e-12) {
 try {
   const require = createRequire(import.meta.url);
   const sources = {};
-  for (const [name, rel] of Object.entries({ octG5: 'src/model/octG5.ts', rainScenarios: 'src/model/rainScenarios.ts', parcelFicha: 'src/reports/parcelFicha.ts' })) {
+  for (const [name, rel] of Object.entries({ octG5: 'src/model/octG5.ts', presentation: 'src/model/presentation.ts', rainScenarios: 'src/model/rainScenarios.ts', parcelFicha: 'src/reports/parcelFicha.ts' })) {
     const source = await fs.readFile(path.join(app, rel), 'utf8');
     sources[name] = source;
     const code = ts.transpileModule(source, { compilerOptions: {
       target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext,
     } }).outputText.replaceAll("'./octG5'", "'./octG5.mjs'")
+      .replaceAll("'../model/octG5'", "'./octG5.mjs'")
+      .replaceAll("'../model/presentation'", "'./presentation.mjs'")
       .replace("from 'jspdf'", `from '${pathToFileURL(require.resolve('jspdf')).href}'`);
     await fs.writeFile(path.join(temp, `${name}.mjs`), code);
   }
   const { predictPrepared, estimateParcel, distanceKm } = await import(pathToFileURL(path.join(temp, 'octG5.mjs')));
   const { rainRange, simulateRain } = await import(pathToFileURL(path.join(temp, 'rainScenarios.mjs')));
   const { createParcelFicha } = await import(pathToFileURL(path.join(temp, 'parcelFicha.mjs')));
+  const { displayedDifference } = await import(pathToFileURL(path.join(temp, 'presentation.mjs')));
+  assert.equal(displayedDifference(4.524480857342476, 4.598), -.08);
+  assert.equal(displayedDifference(4.524480857342476, 4.346), .17);
+  assert.equal(displayedDifference(4.366, 4.612434576359334), -.24);
+  assert.equal(displayedDifference(3.201, 3.204), 0);
   const bundle = await read('src/model/oct-g5-runtime.json');
   const cases = await read('pruebas/referencias_R.json');
   const catalog = await read('src/data/parcels.json');
@@ -40,11 +47,14 @@ try {
   assert.equal(bundle.model.type, 'OCT_G5_FINAL');
   assert.equal(bundle.model.version, '1.5.0');
   assert.equal(bundle.model.recipe, '0.5J_G5_PICK+0.5MIX_CORR');
+  assert.equal(`${evidence.model} ${evidence.version}`, 'OCT_G5 1.5.0');
+  assert.equal(evidence.recipe, bundle.model.recipe);
   let nCases = 0;
   for (const group of Object.values(cases)) {
     const actual = predictPrepared(bundle, group.inputs);
     for (let i = 0; i < actual.length; i++) {
       const a = actual[i], c = group.components[i];
+      assert.equal(a.modelId, 'OCT_G5 1.5.0');
       close(a.yield, group.predictions[i].RENDIMIENTO_T_HA);
       for (const [key, rkey] of Object.entries({j:'J',municipal:'MUN',idw20:'IDW20',kCorrection:'K_correction',mix:'MIX_CORR'})) close(a[key], c[rkey]);
       close(a.referenceBase + Object.values(a.contributions).reduce((s,v)=>s+v,0), a.yield);
@@ -72,6 +82,7 @@ try {
   assert.throws(()=>predictPrepared(bundle,[first,first]));
   for (const change of [{ID_POLIGONO:'AGC_999'},{municipio:'Otro'},{lon:first.lon+.01},{lat:NaN},{H:0},{P:-1},{K:NaN},{K:Infinity},{truth:3},{y:3},{RENDIMIENTO_T_HA:3}]) assert.throws(()=>predictPrepared(bundle,[{...first,...change}]));
   assert.throws(()=>predictPrepared({...bundle,model:{...bundle.model,version:'otra'}},[first]));
+  assert.throws(()=>predictPrepared({...bundle,model:{...bundle.model,recipe:'otra'}},[first]));
   assert.throws(()=>predictPrepared({...bundle,model:{...bundle.model,group_map:{}}},[first]));
   close(distanceKm(0,0,0,0),0);
   close(distanceKm(0,0,180,0),Math.PI*6371.0088,1e-10);
@@ -102,12 +113,26 @@ try {
   }
   const estimated=catalog.find(p=>p.yieldKind==='estimated');
   assert.throws(()=>createParcelFicha({parcel:estimated,estimate:null,reference:null,review:null},fonts));
+  const current = official.find(p=>p.id===estimated.id);
+  assert.throws(()=>createParcelFicha({parcel:estimated,estimate:{...current,modelId:'otra'},reference:null,review:null},fonts));
   // Comparar métricas de la interfaz con el resultado del modelo de este mismo repositorio.
   const text=await fs.readFile(path.join(root,'modelo/resultados/validacion_metricas.csv'),'utf8');
   const lines=text.trim().split(/\r?\n/).map(l=>l.split(',').map(v=>v.replace(/^"|"$/g,'')));
   const rows=lines.slice(1).map(v=>Object.fromEntries(lines[0].map((k,i)=>[k,v[i]])));
   for(const [name,key] of [['represented','LOCAL_5x10'],['separated','ESPACIAL_5']]) {
     const r=rows.find(r=>r.escenario===key);close(evidence.contexts[name].rmse,Number(r.RMSE_media_repeticiones));close(evidence.contexts[name].mae,Number(r.MAE));
+  }
+  const oofText=await fs.readFile(path.join(root,'modelo/resultados/validacion_oof.csv'),'utf8');
+  const oofLines=oofText.trim().split(/\r?\n/).map(l=>l.split(',').map(v=>v.replace(/^"|"$/g,'')));
+  const oof=oofLines.slice(1).map(v=>Object.fromEntries(oofLines[0].map((k,i)=>[k,v[i]])));
+  for(const [name,key] of [['represented','LOCAL_5x10'],['separated','ESPACIAL_5']]) {
+    const context=evidence.contexts[name];
+    const source=oof.filter(p=>p.escenario===key&&(name==='separated'||p.repeticion===context.scatterRepeat));
+    assert.equal(source.length,138);assert.equal(context.scatter.length,138);
+    for(const point of context.scatter) {
+      const expected=source.find(p=>p.ID_POLIGONO===point.id);
+      assert.ok(expected);close(point.truth,Number(expected.real));close(point.pred,Number(expected.prediccion));
+    }
   }
   console.log(JSON.stringify({status:'PASS',model:'OCT_G5 1.5.0',R_cases:nCases,numeric_checks:checks,max_R_case_error:RMaximumError,max_absolute_error:maximumError,official_predictions:59,observed_unchanged:138,rain_scenarios:scenarios,single_page_PDF:197,engine_independent_of_catalog:true},null,2));
 } finally { await fs.rm(temp,{recursive:true,force:true}); }

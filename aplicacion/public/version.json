@@ -1,0 +1,9 @@
+{
+  "release": "2026-10-18-g5-cierre",
+  "model": "OCT_G5",
+  "version": "1.5.0",
+  "recipe": "0.5J_G5_PICK+0.5MIX_CORR",
+  "predictions": 59,
+  "known": 138,
+  "official_csv_sha256": "b3e883bc7b021217b3adfed1170f5a4733cc91bcecb86df4e845d009b31d88ba"
+}

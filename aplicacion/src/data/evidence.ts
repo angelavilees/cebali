@@ -1,4 +1,9 @@
 import modelRows from "./model-oct-g5.json";
+import { MODEL_ID, MODEL_RECIPE } from "../model/octG5";
+
+if (`${modelRows.model} ${modelRows.version}` !== MODEL_ID || modelRows.recipe !== MODEL_RECIPE) {
+  throw new Error("La explicación no corresponde al modelo de esta versión.");
+}
 
 export type Point = [number, number];
 export type ParcelEvidence = {

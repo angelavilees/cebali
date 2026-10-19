@@ -136,39 +136,6 @@
   font-weight: 900;
 }
 
-.sector-selectors label {
-  display: block;
-  min-width: 0;
-}
-
-.sector-selectors label > span {
-  display: block;
-  font-size: 11px;
-  color: #4e6656;
-  font-weight: 800;
-  margin: 0 0 3px 3px;
-}
-
-.sector-map select {
-  width: 100%;
-  min-width: 0;
-  height: 44px;
-  border-radius: var(--radius-control);
-  border: 1px solid #d4dfcc;
-  padding: 7px 28px 7px 10px;
-  font: inherit;
-  font-weight: 800;
-  font-size: 13px;
-  color: #254d36;
-  background: #f4f8eb;
-  text-overflow: ellipsis;
-}
-
-.sector-map select:focus-visible {
-  outline: 3px solid #039deb;
-  outline-offset: 2px;
-}
-
 .sector-stage {
   position: relative;
   flex: 1;
@@ -383,25 +350,6 @@
   background: #f3f7ea;
   border-radius: var(--radius-card);
   flex-shrink: 0;
-}
-
-.sector-selected > label {
-  min-width: 0;
-  flex: 1;
-}
-
-.sector-selected label > span {
-  display: block;
-  font-size: 10px;
-  font-weight: 800;
-  color: #52634b;
-  margin-bottom: 3px;
-}
-
-.sector-selected select {
-  background: #fffef6;
-  height: 44px;
-  font-weight: 900;
 }
 
 .sector-selected > button {

@@ -12,6 +12,7 @@ export type IconName =
   | "leaf"
   | "pin"
   | "list"
+  | "search"
   | "close"
   | "check"
   | "terrain"
@@ -21,6 +22,7 @@ export type IconName =
   | "download"
   | "target";
 const paths: Record<IconName, string[]> = {
+  search: ["M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z", "m15 15 6 6"],
   home: ["m3 10 9-7 9 7", "M5 9v12h5v-7h4v7h5V9"],
   map: ["m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z", "M9 3v16M15 5v16"],
   chart: ["M5 20V10M12 20V4M19 20v-7"],

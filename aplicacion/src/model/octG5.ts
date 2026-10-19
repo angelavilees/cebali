@@ -1,4 +1,6 @@
 // Port literal del modelo OCT_G5 1.5.0. No ajusta parámetros ni lee predicciones.
+export const MODEL_ID = 'OCT_G5 1.5.0' as const;
+export const MODEL_RECIPE = '0.5J_G5_PICK+0.5MIX_CORR' as const;
 export type PreparedInput = {
   ID_POLIGONO: string; municipio: string; lon: number; lat: number;
   P: number; H: number; K: number | null;
@@ -19,6 +21,7 @@ export type ModelBundle = {
 };
 export type FactorKey = 'rain' | 'neighbors' | 'crop';
 export type Estimate = {
+  modelId: typeof MODEL_ID;
   id: string; yield: number; referenceBase: number;
   j: number; municipal: number; idw20: number; kCorrection: number; mix: number;
   kAvailable: boolean; municipalReferences: number; nearestKnownKm: number;
@@ -37,7 +40,8 @@ const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFi
 
 export function validateBundle(bundle: ModelBundle) {
   const { model: m, inputs } = bundle;
-  requireOk(m.type === 'OCT_G5_FINAL' && m.version === '1.5.0', 'Modelo incompatible.');
+  requireOk(m.type === 'OCT_G5_FINAL' && m.version === '1.5.0'
+    && m.recipe === MODEL_RECIPE, 'Modelo incompatible.');
   requireOk(inputs.length === 59 && new Set(inputs.map(x => x.ID_POLIGONO)).size === 59,
     'Registro de parcelas inválido.');
   requireOk(m.known.length === 138 && new Set(m.known.map(x => x.ID_POLIGONO)).size === 138,
@@ -60,7 +64,7 @@ export function validateInput(bundle: ModelBundle, row: PreparedInput) {
   requireOk(!['y', 'truth', 'RENDIMIENTO_T_HA'].some(key => key in row),
     'Las entradas no deben incluir rendimientos conocidos.');
   const canonical = bundle.inputs.find(x => x.ID_POLIGONO === row.ID_POLIGONO);
-  requireOk(Boolean(canonical), 'Selecciona una de las59 parcelas oficiales.');
+  requireOk(Boolean(canonical), 'Selecciona una de las 59 parcelas oficiales.');
   requireOk(typeof row.ID_POLIGONO === 'string' && typeof row.municipio === 'string'
     && row.municipio.length > 0, 'Identificador inválido.');
   requireOk([row.lon, row.lat, row.P, row.H].every(finite)
@@ -113,7 +117,7 @@ export function* estimateSteps(bundle: ModelBundle, row: PreparedInput):
   // Descomposición exacta respecto a la base territorial y municipal, no importancia causal ni porcentajes.
   const referenceBase = .5 * j.group_mean_y[group] + .5 * municipal;
   return {
-    id: row.ID_POLIGONO, yield: prediction, j: predJ, municipal, idw20, kCorrection, mix,
+    modelId: MODEL_ID, id: row.ID_POLIGONO, yield: prediction, j: predJ, municipal, idw20, kCorrection, mix,
     referenceBase, kAvailable: row.K !== null,
     municipalReferences: m.known.filter(p => p.municipio === mu).length,
     territorialGroup: group,
@@ -138,6 +142,6 @@ export function predictPrepared(bundle: ModelBundle, rows: PreparedInput[]): Est
 
 export function estimateParcel(bundle: ModelBundle, id: string) {
   const row = bundle.inputs.find(x => x.ID_POLIGONO === id);
-  requireOk(Boolean(row), 'Selecciona una de las59 parcelas oficiales.');
+  requireOk(Boolean(row), 'Selecciona una de las 59 parcelas oficiales.');
   return estimateSteps(bundle, row!);
 }

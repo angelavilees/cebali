@@ -13,9 +13,41 @@
       content="Cebali: conoce el rendimiento estimado de tu parcela de cebada y comprende los datos que influyen en su cosecha."
     />
     <title>Cebali · Tus parcelas</title>
+    <style>
+      .boot-screen{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;padding:24px;text-align:center;background:#f5f7e9;color:#234e34;font-family:system-ui,sans-serif}
+      .boot-screen svg{width:52px;height:52px;color:#078d43}.boot-screen strong{font-size:38px;letter-spacing:-1.5px}.boot-screen p{font-size:15px;line-height:1.5;max-width:270px;margin:0;color:#4e6656}
+      .boot-screen button{margin-top:8px;min-height:44px;padding:10px 20px;border:1px solid #c6d8ba;border-radius:16px;background:#fffdf5;color:#28583b;font:700 14px system-ui,sans-serif;cursor:pointer}.boot-screen button[hidden]{display:none}.boot-screen button:focus-visible{outline:3px solid #039deb;outline-offset:3px}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <section class="boot-screen" aria-label="Abriendo Cebali">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 42V24M24 29C10 29 6 20 7 9c12 0 20 7 17 20ZM24 24c0-12 7-18 18-18 1 12-5 19-18 18Z" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        <strong>Cebali</strong>
+        <p id="boot-message" role="status">Abriendo tu campo…</p>
+        <button id="boot-retry" type="button" hidden>Volver a cargar</button>
+        <noscript><p>Activa JavaScript en tu navegador para usar Cebali.</p></noscript>
+      </section>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (() => {
+        const retry = document.getElementById('boot-retry');
+        retry.addEventListener('click', () => window.location.reload());
+        const fail = () => {
+          const message = document.getElementById('boot-message');
+          if (!message) return;
+          message.textContent = 'No pudimos abrir Cebali. Revisa tu conexión y vuelve a cargar.';
+          retry.hidden = false;
+        };
+        document.querySelector('script[type="module"]').addEventListener('error', fail);
+        window.setTimeout(() => {
+          const message = document.getElementById('boot-message');
+          if (!message) return;
+          message.textContent = 'La conexión está tardando. Puedes esperar o volver a cargar.';
+          retry.hidden = false;
+        }, 12000);
+      })();
+    </script>
   </body>
 </html>

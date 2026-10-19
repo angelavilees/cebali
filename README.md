@@ -2,7 +2,7 @@
 
 Estimación del rendimiento de cebada de temporal y consulta visual de parcelas para el **Reto AgroCebada FIRA 2026**.
 
-**Modelo incluido:** OCT_G5 1.5.0. Esta revisión actualiza el código y el modelo; el despliegue de esta revisión en Cloudflare se realiza por separado.
+**Modelo incluido:** OCT_G5 1.5.0. El código de esta revisión y la aplicación publicada utilizan la misma receta. La identificación de la publicación está disponible en [`version.json`](https://cebali.pages.dev/version.json).
 
 **Aplicación disponible:** [cebali.pages.dev](https://cebali.pages.dev/).
 
@@ -77,11 +77,17 @@ npm run lint
 npm run preview
 ```
 
-`npm test` compara la inferencia con 295 casos calculados en R, comprueba el catálogo, el simulador y las 197 fichas PDF. El motor no utiliza esas respuestas para predecir; las pruebas las consultan después del cálculo.
+`npm test` compara la inferencia con 295 casos calculados en R, comprueba las 59 predicciones, las 138 cosechas observadas, 232 escenarios de lluvia y las 197 fichas PDF. También contrasta los 276 puntos de los gráficos de validación con los resultados reproducidos en `modelo/resultados/`. El motor no utiliza esas respuestas para predecir; las pruebas las consultan después del cálculo.
+
+El motor, los datos de explicación, el simulador y las fichas verifican la identidad **OCT_G5 1.5.0** y su receta antes de utilizarlos. Las diferencias entre cifras mostradas se calculan con el mismo redondeo visible; la inferencia y la producción total conservan la precisión completa. El gráfico local muestra una repetición de 138 parcelas; sus métricas resumen las diez repeticiones.
+
+Si se reproducen nuevamente las validaciones del mismo modelo y se desea sincronizar sus gráficos, ejecuta `npm run sync:validation` y después `npm test`. Este comando actualiza únicamente los resúmenes y puntos de validación de la interfaz; no cambia los parámetros ni las predicciones.
 
 `build` comprueba TypeScript y genera `aplicacion/dist/`. `lint` revisa el código. `preview` permite consultar la compilación de producción localmente. Para publicar en Cloudflare Pages se sube **el contenido de `dist/`**, no el repositorio ni `node_modules/`.
 
 En pantallas de escritorio se muestra un marco de teléfono con la aplicación dentro de un iframe; en pantallas pequeñas se presenta directamente la interfaz adaptable.
+
+El botón **Ampliar lectura** permite aumentar la vista de escritorio conservando la consulta abierta. Predicciones incluye búsqueda por identificador o municipio y una lista para organizar la revisión por rendimiento estimado dentro de un municipio o estado. Esa lista ejecuta el mismo motor G5; su orden no diagnostica problemas agronómicos. Las cosechas conocidas tienen una sección **Origen del dato** que las identifica como valores oficiales, y las comparaciones indican cuántas cosechas conocidas se utilizan, excluyendo la propia cuando corresponde.
 
 ## 3. Reconstruir el modelo desde los datos oficiales
 
@@ -251,13 +257,21 @@ La ficha PDF se genera en el navegador. Las 138 observadas conservan el dato ofi
 
 ## 8. Estilos y recursos visuales
 
-`aplicacion/src/index.css` reúne `src/styles/`. Colores, radios y tiempos compartidos están en `tokens.css`. Los controles reutilizables son `Button`, `Stat` y `Disclosure` en `src/components/ui/`; las pantallas mantienen sus estilos específicos por función. `motion.css` y el visor respetan movimiento reducido.
+`aplicacion/src/index.css` reúne `src/styles/`. Colores, radios y tiempos compartidos están en `tokens.css`. Los controles reutilizables son `Button`, `Stat`, `Disclosure` y `ChoiceSelect` en `src/components/ui/`; las pantallas mantienen sus estilos específicos por función. Los selectores abren un diálogo redondeado con opciones grandes, búsqueda en listas largas, cierre con Escape y navegación mediante flechas. Se reutiliza la misma plantilla para estados, municipios, parcelas y comparaciones.
+
+La bienvenida presenta la mascota con una animación de marca de 2.55 segundos, sin simular una carga del modelo. Se puede omitir con el botón de entrada o Escape; se muestra una vez por pestaña y sesión y se omite al abrir directamente una pantalla o cuando se solicita movimiento reducido. La interfaz se prepara al mismo tiempo. `welcome.css`, `choices.css`, `motion.css` y el visor respetan la preferencia de movimiento reducido.
+
+Antes de descargar el código inicial, el HTML muestra una portada ligera. Si falla la descarga o la conexión tarda, ofrece volver a cargar. Los gráficos también presentan una acción de recuperación si no se descargan. Las imágenes satelitales son opcionales: sin ellas se conservan los contornos y la selección de parcelas.
+
+La lista de revisión abre directamente estimaciones ya calculadas por el motor. Al regresar se conservan la parcela de procedencia, el alcance municipal o estatal y la lista completa, sin repetir el cálculo. Las cifras se guardan solo en memoria durante la visita.
 
 El mapa y las cabeceras usan contornos del SHP oficial en EPSG:32614 y nueve recortes municipales reales Sentinel-2 L2A del **27 de octubre de 2025**, a **10 m/píxel**. Conservan posiciones, orientación y escala del terreno. Las 51 zonas de navegación no son grupos estadísticos del modelo. Los colores distinguen selección y contexto, no salud del cultivo.
 
 Contiene datos Copernicus Sentinel modificados, 2025, obtenidos del [archivo abierto Sentinel-2 L2A / Earth Search](https://registry.opendata.aws/sentinel-2-l2a-cogs/), escenas `S2B_14QNG_20251027_0_L2A` y `S2B_14QNH_20251027_0_L2A`, consultadas el 17 de octubre de 2026. La procedencia y georreferenciación constan en `aplicacion/src/data/parcel-imagery.json`. La captura es referencia visual, no nueva entrada del modelo. Los recursos se sirven localmente, sin API ni teselas externas.
 
 Las fuentes Nunito están incluidas localmente, al igual que el marco del teléfono y las ilustraciones utilizadas por la interfaz. Se retiraron los recursos del scaffolding que ya no se utilizan.
+
+La mascota de bienvenida `aplicacion/public/cebali-mascot.webp` se generó con asistencia de IA a partir de la referencia visual del proyecto. Es una ilustración decorativa con transparencia, optimizada para la web; no representa datos de una parcela ni interviene en las estimaciones.
 
 ## 9. Documentación complementaria de la entrega
 

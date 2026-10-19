@@ -40,36 +40,8 @@ input {
   font: inherit;
 }
 
-.useful-card > span {
-  font-size: 33px;
-  color: #ffb800;
-}
-
 .model-help-steps svg {
   color: #079549;
-}
-
-.useful-card {
-  display: flex;
-  gap: 11px;
-  align-items: flex-start;
-  background: linear-gradient(120deg, #fff4d9, #f8faed);
-  border-radius: var(--radius-card);
-  padding: 13px 11px;
-  margin-top: 12px;
-}
-
-.useful-card strong {
-  font-size: 15px;
-  font-weight: 900;
-  display: block;
-  margin-bottom: 5px;
-}
-
-.useful-card p {
-  font-size: 13px;
-  line-height: 1.5;
-  font-weight: 600;
 }
 
 .model-help-steps {
@@ -464,20 +436,6 @@ input {
   font-size: 12px;
   font-weight: 800;
   color: #48664e;
-}
-
-.comparison-picker select {
-  display: block;
-  min-height: 44px;
-  width: 100%;
-  border: 1px solid #d5e1cc;
-  padding: 7px;
-  font: inherit;
-  font-size: 12px;
-  border-radius: var(--radius-control);
-  color: #234d36;
-  background: #fffef8;
-  margin: 5px 0 12px;
 }
 
 .comparison-pair {

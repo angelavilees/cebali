@@ -4,6 +4,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -13,8 +14,13 @@ import Stat from "./components/ui/Stat";
 import EvidenceBoundary from "./EvidenceBoundary";
 import PredictionExperience, { EstimateBreakdown } from "./PredictionExperience";
 import FichaDownload from './FichaDownload';
+import PredictionFinder from './PredictionFinder';
+import ChoiceSelect from './components/ui/ChoiceSelect';
+import Welcome from './Welcome';
 import { parcels, states, totalArea } from "./data/catalog";
 import type { Parcel, StateName } from "./data/catalog";
+import type { Estimate } from './model/octG5';
+import type { ReviewView } from './PredictionReview';
 
 // Datos y visualizaciones se cargan al abrir el detalle, sin retrasar Inicio.
 const loadPanels = () =>
@@ -53,6 +59,11 @@ const TerrainFacts = lazy(() =>
 );
 const ParcelHeader = lazy(() => import('./ParcelHeader'));
 const RainExplorer = lazy(() => import('./RainExplorer'));
+const PredictionReview = lazy(() => import('./PredictionReview'));
+const ModelVersion = lazy(async () => {
+  const { MODEL_ID } = await import('./model/octG5');
+  return { default: () => <p className="model-version">Modelo {MODEL_ID}</p> };
+});
 const ParcelMap = lazy(() => import('./ParcelMap'));
 
 type Screen = "home" | "parcels" | "predictions" | "detail" | "prediction";
@@ -141,6 +152,18 @@ function Curve({
 }
 
 export default function MobileApp() {
+  const [welcoming, setWelcoming] = useState(() => {
+    if (new URLSearchParams(window.location.search).has('screen')) return false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    try { return sessionStorage.getItem('cebali:welcome:v1') !== 'seen'; }
+    catch { return true; }
+  });
+  const predictionToolsName = useId();
+  const reviewPanel = useRef<HTMLDetailsElement>(null);
+  const restoringReview = useRef(false);
+  const [estimates, setEstimates] = useState<Record<string, Estimate>>({});
+  const [reviewView, setReviewView] = useState<ReviewView>({scope: 'municipality', showAll: false});
+  const [reviewOrigin, setReviewOrigin] = useState<{parcel: Parcel; screen: Screen; state: StateName | 'Todas'; view: ReviewView} | null>(null);
   const [screen, setScreen] = useState<Screen>(() => {
     const initial = new URLSearchParams(window.location.search).get("screen");
     return ["parcels", "predictions", "detail", "prediction"].includes(
@@ -170,6 +193,41 @@ export default function MobileApp() {
   const shownPredictions = predictions.filter(
     (p) => predictionState === "Todas" || p.state === predictionState,
   );
+  function selectPrediction(selected: Parcel) {
+    if (selected.yieldKind !== 'estimated') return;
+    if (predictionState !== 'Todas' && predictionState !== selected.state) setPredictionState(selected.state);
+    setPredictionId(selected.id);
+    setParcel(selected);
+    setPredictionView('result');
+    reviewPanel.current?.removeAttribute('open');
+    scroll.current?.scrollTo({ top: 0 });
+    heading.current?.focus({ preventScroll: true });
+  }
+  function reviewPrediction(selected: Parcel, estimate: Estimate) {
+    if (selected.id === parcel.id) { openReview(); return; }
+    if (!reviewOrigin) setReviewOrigin({parcel, screen, state: predictionState, view: reviewView});
+    setEstimates(previous => ({...previous, [selected.id]: estimate}));
+    selectPrediction(selected);
+  }
+  function returnToReview() {
+    if (!reviewOrigin) return;
+    restoringReview.current = true;
+    setParcel(reviewOrigin.parcel);
+    setPredictionId(reviewOrigin.parcel.id);
+    setPredictionState(reviewOrigin.state);
+    setScreen(reviewOrigin.screen);
+    setPredictionView('result');
+    setReviewView(reviewOrigin.view);
+    setReviewOrigin(null);
+  }
+  function openReview() {
+    const panel = reviewPanel.current;
+    if (!panel) return;
+    panel.open = true;
+    const summary = panel.querySelector('summary');
+    summary?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    summary?.focus({ preventScroll: true });
+  }
   const predictionsActive =
     screen === "predictions" ||
     (screen === "prediction" && parcel.yieldKind === "estimated");
@@ -183,6 +241,7 @@ export default function MobileApp() {
       : `${stateFilter}:map`;
   function filterPredictions(state: StateName | "Todas") {
     if (state === predictionState) return;
+    setReviewOrigin(null);
     const first = predictions.find(
       (p) => state === "Todas" || p.state === state,
     )!;
@@ -220,9 +279,18 @@ export default function MobileApp() {
     if (screen === "predictions" || screen === "prediction")
       scroll.current?.scrollTo({ top: 0 });
   }, [screen, predictionView, parcel.id]);
+  useLayoutEffect(() => {
+    if (restoringReview.current && reviewPanel.current) {
+      restoringReview.current = false;
+      reviewPanel.current.open = true;
+      const summary = reviewPanel.current.querySelector('summary');
+      summary?.scrollIntoView({block: 'start'});
+      summary?.focus({preventScroll: true});
+    }
+  }, [parcel.id, screen]);
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
-  }, [screen]);
+  }, [screen, welcoming]);
   useEffect(() => {
     if (!help) {
       helpOrigin.current?.focus({ preventScroll: true });
@@ -271,11 +339,12 @@ export default function MobileApp() {
       );
     if (next === "predictions" || next === "prediction")
       setPredictionView("result");
-    if (fromMenu) history.current = [];
+    if (fromMenu) { history.current = []; setReviewOrigin(null); }
     else history.current.push(screen);
     setScreen(next);
   }
   function back() {
+    if (reviewOrigin) { returnToReview(); return; }
     setScreen(
       history.current.pop() ??
         (screen === "prediction"
@@ -312,7 +381,7 @@ export default function MobileApp() {
 
   return (
     <div className={`mobile-app screen-${screen}`}>
-      <div className="app-shell" inert={help !== null}>
+      <div className="app-shell" inert={help !== null || welcoming}>
         <div className="status-bar" aria-hidden="true">
           <span>9:41</span>
           <span className="status-right">
@@ -387,55 +456,14 @@ export default function MobileApp() {
         )}
         {screen === "predictions" && (
           <div className="predictions-toolbar predictions-selectors">
-            <label>
-              <span>Estado</span>
-              <div className="prediction-picker">
-                <select
-                  aria-label="Filtrar predicciones por estado"
-                  value={predictionState}
-                  onChange={(event) =>
-                    filterPredictions(event.target.value as StateName | "Todas")
-                  }
-                >
-                  {(["Todas", ...states] as (StateName | "Todas")[]).map(
-                    (state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ),
-                  )}
-                </select>
-                <span className="picker-arrow">
-                  <Icon name="chevron" size={17} />
-                </span>
-              </div>
-            </label>
-            <label>
+            <ChoiceSelect label="Estado" title="¿Qué estado quieres consultar?" ariaLabel="Filtrar predicciones por estado"
+              value={predictionState} onChange={value => filterPredictions(value as StateName | 'Todas')}
+              options={['Todas', ...states].map(state => ({ value: state, label: state,
+                description: `${predictions.filter(p => state === 'Todas' || p.state === state).length} parcelas para estimar` }))} />
+            <div className="prediction-field">
               <span>Parcela</span>
-              <div className="prediction-picker">
-                <select
-                  aria-label="Elegir parcela para la predicción"
-                  value={parcel.id}
-                  onChange={(event) => {
-                    const selected = shownPredictions.find(
-                      (p) => p.id === event.target.value,
-                    )!;
-                    setPredictionId(selected.id);
-                    setParcel(selected);
-                    setPredictionView("result");
-                  }}
-                >
-                  {shownPredictions.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.id} · {p.state}
-                    </option>
-                  ))}
-                </select>
-                <span className="picker-arrow">
-                  <Icon name="chevron" size={17} />
-                </span>
-              </div>
-            </label>
+              <PredictionFinder items={shownPredictions} selected={parcel} onSelect={selected => { setReviewOrigin(null); selectPrediction(selected); }} />
+            </div>
           </div>
         )}
         <div
@@ -512,11 +540,7 @@ export default function MobileApp() {
                       </button>
                     </div>
                     <ParcelMap compact items={parcels} selected={parcel.id} onSelect={setParcel}
-                      onOpen={(p) => {
-                        setParcel(p);
-                        setStateFilter(p.state);
-                        go("parcels");
-                      }} />
+                      onOpen={open} />
                     <div className="first-time">
                       <button
                         className="learning-row"
@@ -666,10 +690,12 @@ export default function MobileApp() {
                 </div>
               )}
               {(screen === "predictions" || screen === "prediction") && (
-                <PredictionExperience key={parcel.id} parcel={parcel}>
+                <PredictionExperience key={parcel.id} parcel={parcel} initialEstimate={estimates[parcel.id]}
+                  onReady={estimate => setEstimates(previous => ({...previous, [estimate.id]: estimate}))}>
                   {(estimate) => {
                     const resultParcel = estimate ? { ...parcel, yield: estimate.yield } : parcel;
                     return (<div className="prediction-body visual-prediction">
+                      {reviewOrigin && <button className="model-link" onClick={returnToReview}><Icon name="back" size={18} />Volver a la lista de revisión</button>}
                       <div
                         className="segmented prediction-tabs"
                         role="group"
@@ -689,22 +715,22 @@ export default function MobileApp() {
                           aria-pressed={predictionView === "explanation"}
                           onClick={() => setPredictionView("explanation")}
                         >
-                          Explicación
+                          {resultParcel.yieldKind === 'estimated' ? 'Explicación' : 'Origen del dato'}
                         </button>
                       </div>
                       {predictionView === "result" ? (
                         <>
                           <section className="harvest-hero">
                             <span className="harvest-kicker"><Icon name="wheat" size={23} />{resultParcel.yieldKind === "estimated" ? "Tu cosecha estimada" : "Tu cosecha conocida"}</span>
+                            <p className="harvest-location">{resultParcel.id} · {resultParcel.municipality}, {resultParcel.state}</p>
                             <strong className="harvest-yield">{format(resultParcel.yield, 2)}<small>toneladas por hectárea</small></strong>
                             <div className="harvest-total"><Icon name="map" size={26} /><span>En toda tu parcela, aprox.<strong>{format(resultParcel.area * resultParcel.yield, 1)} toneladas</strong><small>{format(resultParcel.area, 2)} hectáreas</small></span></div>
                             <p>{resultParcel.yieldKind === "estimated" ? "Ciclo 2025 · La cosecha real puede ser diferente." : "Cosecha oficial del ciclo 2025."}</p>
                           </section>
-                          {estimate && <Suspense fallback={null}><RainExplorer key={`rain-${resultParcel.id}`} parcel={resultParcel} estimate={estimate} /></Suspense>}
                           <ModelSignals parcel={resultParcel} />
+                          <button className="model-link" onClick={() => setPredictionView("explanation")}><Icon name="help" size={22} />{resultParcel.yieldKind === 'estimated' ? '¿Cómo llegamos a esta cifra?' : '¿De dónde sale este dato?'}<Icon name="chevron" size={17} /></button>
                           <FichaDownload key={`ficha-${resultParcel.id}`} parcel={resultParcel} estimate={estimate} />
-                          {estimate && <EstimateBreakdown estimate={estimate} parcel={resultParcel} />}
-                          <ParcelReading key={`reading-${resultParcel.id}`} parcel={resultParcel} />
+                          <ParcelReading key={`reading-${resultParcel.id}`} parcel={resultParcel} onReview={estimate ? openReview : undefined} />
                           <section className="cycle-visual">
                             <div className="cycle-title">
                               <span>
@@ -732,16 +758,22 @@ export default function MobileApp() {
                               animationKey={growthAnimation}
                             />
                           </section>
-                          <button className="model-link" onClick={() => setPredictionView("explanation")}><Icon name="help" size={22} />¿Cómo llegamos a esta cifra?<Icon name="chevron" size={17} /></button>
-                          <Disclosure icon="sun" title="Ver la lluvia y el calor"><ClimatePanel key={`climate-${resultParcel.id}`} parcel={resultParcel} /></Disclosure>
-                          <SatelliteDetails
-                            key={`satellite-${resultParcel.id}`}
-                            parcel={resultParcel}
-                          />
-                          <CompareParcels
-                            key={`compare-${resultParcel.id}`}
-                            parcel={resultParcel}
-                          />
+                          <section className="prediction-tools" aria-label="Herramientas para explorar tu parcela">
+                            <h2>Explora tu parcela</h2>
+                            {estimate && <PredictionReview key={`review-${resultParcel.id}`} parcel={resultParcel} items={predictions} onSelect={reviewPrediction} view={reviewView} onViewChange={setReviewView} accordionName={predictionToolsName} panelRef={reviewPanel} />}
+                            <Disclosure name={predictionToolsName} key={`climate-${resultParcel.id}`} icon="sun" title="Ver condiciones climáticas"><ClimatePanel parcel={resultParcel} /></Disclosure>
+                            <SatelliteDetails
+                              key={`satellite-${resultParcel.id}`}
+                              parcel={resultParcel}
+                              accordionName={predictionToolsName}
+                            />
+                            <CompareParcels
+                              key={`compare-${resultParcel.id}`}
+                              parcel={resultParcel}
+                              accordionName={predictionToolsName}
+                            />
+                            {estimate && <Suspense fallback={null}><RainExplorer key={`rain-${resultParcel.id}`} parcel={resultParcel} estimate={estimate} accordionName={predictionToolsName} /></Suspense>}
+                          </section>
                         </>
                       ) : (
                         <div className="prediction-explanation">
@@ -757,25 +789,18 @@ export default function MobileApp() {
                               </small>
                             </span>
                           </div>
-                          <ModelStory parcel={resultParcel} />
+                          {resultParcel.yieldKind === 'estimated' ? <ModelStory parcel={resultParcel} /> : <>
+                            <section className="evidence-card official-source">
+                              <h2><Icon name="check" />Dato del catálogo oficial</h2>
+                              <p>El rendimiento de <strong>{resultParcel.id}</strong> fue proporcionado en el catálogo oficial del ciclo 2025. <strong>Cebali no calculó esta cifra.</strong></p>
+                              <p>La producción total se obtiene multiplicando ese rendimiento por las {format(resultParcel.area, 2)} hectáreas de la parcela.</p>
+                            </section>
+                            <Disclosure icon="help" title="Cómo estimamos las otras parcelas"><ModelStory parcel={resultParcel} /><ValidationPanel /></Disclosure>
+                          </>}
                           <FichaDownload key={`ficha-${resultParcel.id}`} parcel={resultParcel} estimate={estimate} />
                           {estimate && <EstimateBreakdown estimate={estimate} parcel={resultParcel} />}
                           <ModelSignals parcel={resultParcel} />
-                          <ValidationPanel />
-                          <button className="model-link" onClick={() => openHelp()}>
-                            <Icon name="help" size={22} /> ¿Cómo estima el modelo?{" "}
-                            <Icon name="chevron" size={17} />
-                          </button>
-                          <section className="useful-card">
-                            <span>✦</span>
-                            <div>
-                              <strong>¿Para qué te sirve?</strong>
-                              <p>
-                                Para comparar la cosecha prevista de tus parcelas y
-                                preparar con tu técnico la revisión del ciclo.
-                              </p>
-                            </div>
-                          </section>
+                          {estimate && <ValidationPanel />}
                         </div>
                       )}
                     </div>);
@@ -830,6 +855,7 @@ export default function MobileApp() {
         </nav>
         <div className="home-indicator" aria-hidden="true" />
       </div>
+      {welcoming && <Welcome onDone={() => setWelcoming(false)} />}
       {help && (
         <div className="modal-shade" onClick={() => setHelp(null)}>
           <section
@@ -870,7 +896,7 @@ export default function MobileApp() {
               <>
                 <p>
                   <strong>t/ha significa toneladas por hectárea.</strong> Es la
-                  cantidad de grano que se estima para cada hectárea de terreno.
+                  cantidad de grano por cada hectárea de terreno, ya sea medida o estimada.
                 </p>
                 <div className="plain-example">
                   <strong>{format(parcel.yield, 2)} t/ha</strong>
@@ -895,7 +921,7 @@ export default function MobileApp() {
                 <div className="plain-example">
                   <Icon name="leaf" size={36} />
                   <span>
-                    La línea azul sube cuando
+                    La línea sube cuando
                     <br />
                     <strong>el campo se ve más verde.</strong>
                   </span>
@@ -908,7 +934,7 @@ export default function MobileApp() {
             ) : (
               <>
                 <p>
-                  Aprendemos de cosechas conocidas de la zona. Miramos la
+                  Aprendemos de cosechas conocidas de la zona. Observamos la
                   lluvia y las imágenes del cultivo para calcular una cifra
                   orientativa para tu parcela.
                 </p>
@@ -963,6 +989,7 @@ export default function MobileApp() {
                 demás parcelas mostramos una estimación. No son datos de hoy.
               </p>
             </div>
+            <Suspense fallback={null}><ModelVersion /></Suspense>
             <Button onClick={() => setHelp(null)}>
               Listo <Icon name="check" size={20} />
             </Button>

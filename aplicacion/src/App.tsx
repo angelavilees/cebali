@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import MobileApp from "./MobileApp";
 
 export default function App() {
+  const [readingMode, setReadingMode] = useState(false);
   const [size, setSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -25,12 +26,13 @@ export default function App() {
   const appUrl = new URL(window.location.href);
   appUrl.searchParams.set("view", "app");
   return (
-    <main className="preview">
+    <main className={`preview${readingMode ? ' is-reading' : ''}`}>
+      <button className="preview-reading-toggle" aria-pressed={readingMode} onClick={() => setReadingMode(!readingMode)}>{readingMode ? 'Volver al teléfono' : 'Ampliar lectura'}</button>
       <div
         className="phone-size"
-        style={{ width: 393 * scale, height: 800 * scale }}
+        style={readingMode ? { width: Math.min(size.width - 32, 560), height: Math.max(240, size.height - 92) } : { width: 393 * scale, height: 800 * scale }}
       >
-        <div className="phone" style={{ transform: `scale(${scale})` }}>
+        <div className="phone" style={{ transform: readingMode ? 'none' : `scale(${scale})` }}>
           <iframe
             className="phone-screen"
             src={appUrl.toString()}

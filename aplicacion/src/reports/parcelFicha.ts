@@ -1,6 +1,8 @@
 import { jsPDF } from 'jspdf';
 import type { Parcel } from '../data/catalog';
 import type { Estimate } from '../model/octG5';
+import { MODEL_ID } from '../model/octG5';
+import { displayedDifference } from '../model/presentation';
 
 export type FichaData = {
   parcel: Parcel;
@@ -21,7 +23,7 @@ const colors = {
 export function createParcelFicha(data: FichaData, fonts: FichaFonts) {
   const { parcel: p, estimate: e, reference, review } = data;
   const estimated = p.yieldKind === 'estimated';
-  if (estimated && (!e || e.id !== p.id || !Number.isFinite(e.yield))) {
+  if (estimated && (!e || e.modelId !== MODEL_ID || e.id !== p.id || !Number.isFinite(e.yield))) {
     throw new Error('Primero calcula esta parcela.');
   }
   const value = estimated ? e!.yield : p.yield;
@@ -34,7 +36,7 @@ export function createParcelFicha(data: FichaData, fonts: FichaFonts) {
   doc.addFileToVFS('Nunito-Bold.ttf', fonts.bold);
   doc.addFont('Nunito-Bold.ttf', 'Nunito', 'bold');
   doc.setProperties({ title: `Cebali - ${p.id} - ciclo 2025`, author: 'Cebali',
-    subject: estimated ? 'Ficha de rendimiento estimado' : 'Ficha de cosecha conocida' });
+    subject: estimated ? `Ficha de rendimiento estimado | ${MODEL_ID}` : 'Ficha de cosecha conocida' });
   const text = (s: string, x: number, y: number, size = 10, bold = false, color = colors.ink) => {
     doc.setFont('Nunito', bold ? 'bold' : 'normal');
     doc.setFontSize(size); doc.setTextColor(color); doc.text(s, x, y);
@@ -140,14 +142,16 @@ export function createParcelFicha(data: FichaData, fonts: FichaFonts) {
   ['Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct'].forEach((m, i) => text(m, px(i) - 3, chartBottom + 5, 8, false, colors.muted));
   y = chartBottom + 10;
 
-  const delta = reference ? value - reference.mean : null;
-  let reading = reference && delta !== null
-    ? `${estimated ? 'Se esperan' : 'Se registraron'} ${number(Math.abs(delta))} t/ha ${delta >= 0 ? 'más' : 'menos'} que la referencia de ${reference.count} ${reference.count === 1 ? 'cosecha conocida' : 'cosechas conocidas'} del municipio (${number(reference.mean)} t/ha).`
+  const delta = reference ? displayedDifference(value, reference.mean) : null;
+  let reading = `${estimated ? 'Rendimiento estimado' : 'Rendimiento conocido'}: ${number(value)} t/ha. `;
+  const referenceName = reference?.count === 1
+    ? `${estimated ? 'la' : 'la otra'} cosecha conocida`
+    : `el promedio de las ${estimated ? '' : 'otras '}${reference?.count} cosechas conocidas`;
+  reading += reference && delta !== null
+    ? `${delta === 0 ? 'La cifra mostrada coincide con' : `Son ${number(Math.abs(delta))} t/ha ${delta > 0 ? 'más' : 'menos'} que`} ${referenceName} del municipio: ${number(reference.mean)} t/ha.`
     : 'No hay otras cosechas conocidas de este municipio para comparar.';
-  reading += reference?.count === 1 ? ' Una sola referencia limita la comparación.' : '';
-  const action = delta !== null && delta < -.005
-    ? 'Empieza por las parcelas con menor cosecha prevista y revisa su lluvia y verdor con tu técnico.'
-    : 'Compara la lluvia y el verdor con lo que viste en campo. La diferencia de rendimiento no demuestra mejores prácticas.';
+  reading += reference?.count === 1 && !review ? ' Una sola referencia limita la comparación.' : '';
+  const action = `${estimated ? 'Empieza por las parcelas con menor rendimiento estimado. ' : ''}Compara ${estimated ? 'su' : 'la'} lluvia y el verdor del cultivo con lo que observaste en campo y revísalo con tu técnico.`;
   // La altura se mide antes de pintar para mantener toda la ficha en una página.
   doc.setFont('Nunito', 'normal');
   doc.setFontSize(9);
@@ -155,7 +159,7 @@ export function createParcelFicha(data: FichaData, fonts: FichaFonts) {
   const h2 = (doc.splitTextToSize(action, 164) as string[]).length * 9 * .3528 * 1.25;
   const cardHeight = 17 + h1 + h2;
   box(16, y, 178, cardHeight, colors.blue);
-  text('Para revisar tu cosecha', 22, y + 7, 11, true);
+  text('¿Qué puedes revisar?', 22, y + 7, 11, true);
   paragraph(reading, 22, y + 13, 164, 9);
   paragraph(action, 22, y + 15 + h1, 164, 9);
   y += cardHeight;

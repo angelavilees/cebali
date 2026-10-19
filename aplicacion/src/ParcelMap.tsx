@@ -1,5 +1,6 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import Icon from './Icons';
+import ChoiceSelect from './components/ui/ChoiceSelect';
 import type { Parcel } from './data/catalog';
 import { fitZone, geography, scaleDistance } from './data/parcelZones';
 import type { Box } from './data/parcelZones';
@@ -118,21 +119,16 @@ export default function ParcelMap({ items, selected, onSelect, onOpen, compact =
 
   return <section className={`sector-map ${compact ? 'sector-compact' : ''}`} aria-label="Explorar parcelas por zonas reales">
     <div className={`sector-selectors ${compact ? 'two-selectors' : 'with-finder'}`}>
-      {compact && <label><span>Estado</span><select value={zone.state} aria-label="Estado del visor de Inicio"
-        onChange={e => {
-          const first = allZones.find(z => z.state === e.target.value);
+      {compact && <ChoiceSelect label="Estado" title="Elige un estado" value={zone.state} ariaLabel="Estado del visor de Inicio"
+        onChange={value => {
+          const first = allZones.find(z => z.state === value);
           if (first) selectZone(first.id);
-        }}>
-        {[...new Set(allZones.map(z => z.state))].map(s => <option key={s}>{s}</option>)}
-      </select></label>}
-      <label><span>Municipio</span><select value={municipalityKey} aria-label={compact ? 'Municipio del visor de Inicio' : 'Municipio de las parcelas'}
-        onChange={e => changeMunicipality(e.target.value)}>
-        {municipalities.filter(z => !compact || z.state === zone.state).map(z => (
-          <option key={`${z.state}::${z.municipality}`} value={`${z.state}::${z.municipality}`}>
-            {z.municipality}{!compact && new Set(items.map(p => p.state)).size > 1 ? ` · ${z.state}` : ''}
-          </option>
-        ))}
-      </select></label>
+        }} options={[...new Set(allZones.map(z => z.state))].map(state => ({ value: state, label: state }))} />}
+      <ChoiceSelect label="Municipio" title="Elige un municipio" value={municipalityKey} ariaLabel={compact ? 'Municipio del visor de Inicio' : 'Municipio de las parcelas'}
+        onChange={changeMunicipality} options={municipalities.filter(z => !compact || z.state === zone.state).map(z => ({
+          value: `${z.state}::${z.municipality}`, label: z.municipality,
+          description: !compact && new Set(items.map(p => p.state)).size > 1 ? z.state : undefined,
+        }))} />
       {!compact && <button className="sector-find-trigger" onClick={() => {
         setQuery(''); finder.current?.showModal(); finderInput.current?.focus();
       }}><Icon name="list" size={18} />Buscar parcela</button>}
@@ -190,11 +186,10 @@ export default function ParcelMap({ items, selected, onSelect, onOpen, compact =
       <button disabled={index === zones.length - 1} aria-label="Zona siguiente" onClick={() => selectZone(zones[index + 1].id)}><Icon name="chevron" size={21} /></button>
     </div>
     <div className="sector-selected">
-      <label><span>Parcela · {fmt(current.area)} ha</span><select value={current.id}
-        aria-label={compact ? 'Parcela de la zona de Inicio' : 'Parcela de esta zona'}
-        onChange={e => onSelect(items.find(p => p.id === e.target.value)!)}>
-        {visible.map(p => <option key={p.id} value={p.id}>{p.id}</option>)}
-      </select></label>
+      <ChoiceSelect label={`Parcela · ${fmt(current.area)} ha`} title="Elige una parcela" value={current.id}
+        ariaLabel={compact ? 'Parcela de la zona de Inicio' : 'Parcela de esta zona'}
+        onChange={value => onSelect(items.find(p => p.id === value)!)}
+        options={visible.map(p => ({value: p.id, label: p.id, description: `${fmt(p.area)} hectáreas`}))} />
       <button onClick={() => onOpen(current)}>{compact ? 'Explorar' : 'Ver parcela'}<Icon name="chevron" size={17} /></button>
     </div>
     <p className="sector-caption">{imageReady ? <><a href="https://registry.opendata.aws/sentinel-2-l2a-cogs/" target="_blank" rel="noreferrer">Copernicus Sentinel‑2 · Earth Search</a> · 10 m/píxel</> : 'Contornos oficiales del SHP'}</p>

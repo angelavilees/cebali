@@ -1,0 +1,40 @@
+/* Una sola plantilla para todos los selectores de la aplicación. */
+.choice-field { min-width: 0; }
+.choice-label { display: block; margin: 0 0 4px 4px; color: #4e6656; font-size: 11px; font-weight: 800; }
+.choice-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; gap: 6px; padding: 9px 10px; color: #254d36; background: #f4f8eb; border: 1px solid #d4dfcc; border-radius: var(--radius-control); text-align: left; font-size: 13px; font-weight: 800; transition: background var(--motion-quick), border-color var(--motion-quick), box-shadow var(--motion-quick); }
+.choice-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice-trigger > svg { flex-shrink: 0; transform: rotate(90deg); transition: transform var(--motion-panel) var(--ease-out); }
+.choice-trigger[aria-expanded=true] { border-color: #008e3f; background: #edf6e4; box-shadow: 0 0 0 3px #008e3f14; }
+.choice-trigger[aria-expanded=true] > svg { transform: rotate(-90deg); }
+.choice-sheet { width: calc(100% - 24px); max-width: 450px; max-height: min(78dvh, 620px); margin: auto auto max(18px, env(safe-area-inset-bottom)); padding: 0; color: var(--ink); background: var(--paper); border: 1px solid #d9e3d0; border-radius: var(--radius-sheet); box-shadow: 0 16px 65px #10291c40; overflow: hidden; }
+.choice-sheet[open] { display: flex; animation: choice-rise 300ms var(--ease-out) both; }
+.choice-sheet::backdrop { background: #173d2a65; backdrop-filter: blur(5px); animation: choice-shade 220ms ease-out both; }
+.choice-sheet-body { width: 100%; min-height: 0; display: flex; flex-direction: column; padding: 20px 14px 14px; }
+.choice-sheet-body::before { content: ''; display: block; width: 34px; height: 4px; flex-shrink: 0; margin: -8px auto 15px; border-radius: 20px; background: #d5dfcc; }
+.choice-sheet header { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 0 4px 15px; }
+.choice-sheet header > div { min-width: 0; }
+.choice-sheet h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.5px; margin-top: 4px; }
+.choice-eyebrow { font-size: 10px; font-weight: 900; letter-spacing: 1.6px; color: #38734c; }
+.choice-sheet header .icon-button { background: #edf3e5; color: #45634b; flex-shrink: 0; }
+.choice-search { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 0 12px; min-height: 47px; border: 1px solid #ccdabc; background: #fff; border-radius: var(--radius-control); color: #4e7652; }
+.choice-search:focus-within { outline: 3px solid #039deb; outline-offset: 2px; }
+.choice-search input { width: 100%; min-width: 0; min-height: 44px; border: 0; background: transparent; color: #274735; font: inherit; font-size: 14px; outline: none; }
+.choice-search input:focus-visible { outline: none; }
+.choice-options { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 3px; scrollbar-width: thin; scrollbar-color: #c2d4b4 transparent; }
+.choice-options > button { width: 100%; min-height: 54px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; border: 1px solid transparent; border-radius: var(--radius-control); text-align: left; color: #284b36; transition: background 160ms ease; }
+.choice-options > button + button { margin-top: 4px; }
+.choice-options > button > span:first-child { min-width: 0; }
+.choice-options strong { display: block; font-size: 17px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+.choice-options small { display: block; font-size: 12px; font-weight: 600; line-height: 1.5; margin-top: 3px; color: #586e59; }
+.choice-check { display: grid; place-items: center; flex-shrink: 0; width: 25px; height: 25px; border: 1.5px solid #d5dfce; border-radius: 50%; }
+.choice-options > button[aria-pressed=true] { background: #eaf5df; border-color: #c7ddba; color: #08713a; }
+.choice-options > button[aria-pressed=true] .choice-check { background: #078d43; border-color: #078d43; color: #fff; }
+.choice-empty { font-size: 14px; color: #526b54; padding: 20px 10px; text-align: center; }
+.sector-selected > .choice-field { flex: 1; }
+.sector-selected .choice-label { font-size: 10px; margin-left: 0; }
+.sector-selected .choice-trigger { background: #fffef6; font-weight: 900; }
+.comparison-picker { margin: 5px 0 12px; }
+@media (hover: hover) { .choice-trigger:hover { border-color: #9abb8d; background: #edf5e3; } .choice-options > button:hover { background: #f0f5e8; } }
+@media (prefers-reduced-motion: reduce) { .choice-sheet[open], .choice-sheet::backdrop { animation: none; } .choice-trigger, .choice-trigger > svg, .choice-options > button { transition: none; } }
+@keyframes choice-rise { from { opacity: 0; transform: translateY(20px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes choice-shade { from { background: #173d2a00; backdrop-filter: blur(0); } to { background: #173d2a65; backdrop-filter: blur(5px); } }

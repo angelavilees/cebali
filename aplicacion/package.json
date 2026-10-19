@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node pruebas/comprobar.mjs"
+    "test": "node pruebas/comprobar.mjs",
+    "sync:validation": "node pruebas/actualizar-validacion.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.1",

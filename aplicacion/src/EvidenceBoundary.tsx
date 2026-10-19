@@ -16,7 +16,7 @@ export default class EvidenceBoundary extends Component<
         <section className="evidence-loading" role="alert">
           <Icon name="help" size={32} />
           <h2>No pudimos cargar los gráficos</h2>
-          <p>Comprueba que la aplicación siga abierta y vuelve a cargarla.</p>
+          <p>Revisa tu conexión y vuelve a cargar la página para intentarlo de nuevo.</p>
           <button className="primary" onClick={() => window.location.reload()}>
             Volver a cargar
           </button>

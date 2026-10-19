@@ -1,4 +1,5 @@
 import Disclosure from "./components/ui/Disclosure";
+import ChoiceSelect from './components/ui/ChoiceSelect';
 import { useState } from "react";
 import Icon from "./Icons";
 import BarleyPlants from "./BarleyPlants";
@@ -6,6 +7,7 @@ import { parcels } from "./data/catalog";
 import type { Parcel } from "./data/catalog";
 import { parcelEvidence, modelEvidence } from "./data/evidence";
 import type { Point } from "./data/evidence";
+import { displayedDifference } from "./model/presentation";
 
 const fmt = (n: number, d = 1) =>
   n.toLocaleString("es-MX", {
@@ -174,10 +176,10 @@ export function ModelCycle({
   );
 }
 
-export function SatelliteDetails({ parcel }: { parcel: Parcel }) {
+export function SatelliteDetails({ parcel, accordionName }: { parcel: Parcel; accordionName?: string }) {
   const d = parcelEvidence[parcel.id];
   return (
-    <Disclosure icon="leaf" title="¿Cuándo estuvo más verde?" className="satellite-details">
+    <Disclosure name={accordionName} icon="leaf" title="¿Cuándo estuvo más verde?" className="satellite-details">
         <div className="green-peak"><Icon name="leaf" size={35} /><span>Mayor verdor observado<strong>{labelDate(d.peak.date)} de 2025</strong></span></div>
         <p className="evidence-copy">Las imágenes muestran cómo cambió el verdor. Si la línea tiene huecos, faltan imágenes claras de esos días.</p>
       </Disclosure>
@@ -201,7 +203,7 @@ export function ClimatePanel({ parcel }: { parcel: Parcel }) {
     <section className="evidence-card climate-panel">
       <h2>
         <Icon name="drop" />
-        La lluvia y el calor de este ciclo
+        Condiciones climáticas del ciclo 2025
       </h2>
       <p className="evidence-copy">
         Mira en qué meses llovió más y cómo cambió la temperatura.
@@ -348,7 +350,7 @@ export function ModelSignals({ parcel }: { parcel: Parcel }) {
   return (
     <section className="support-notice" aria-label="Nota sobre esta estimación">
       <Icon name="help" size={27} />
-      <p><strong>Revisa esta cifra con tu técnico.</strong>{d.climateSupportIncomplete ? "Faltan cosechas conocidas que compartan los datos de lluvia de esta parcela." : "Hay una sola cosecha conocida en este municipio; también usamos referencias de su zona."} La cosecha real puede ser diferente.</p>
+      <p><strong>Revisa esta cifra con tu técnico.</strong>{d.climateSupportIncomplete ? "Faltan cosechas conocidas que compartan los datos de lluvia de esta parcela." : "Solo hay una cosecha conocida en este municipio; usamos también referencias de la zona."}</p>
     </section>
   );
 }
@@ -358,12 +360,12 @@ export function ModelStory({ parcel }: { parcel: Parcel }) {
   const info = modelEvidence.parcels[parcel.id];
   return (
     <section className="evidence-card model-story simple-story">
-      <h2><Icon name="wheat" />¿Cómo lo calculamos?</h2>
+      <h2><Icon name="wheat" />{estimated ? '¿Cómo lo calculamos?' : 'Así estimamos las otras parcelas'}</h2>
       <div className="model-training"><Icon name="map" size={30} /><strong>Aprendemos de cosechas conocidas</strong></div>
       <div className="story-arrow" aria-hidden="true">↓</div>
       <div className="model-branches">
-        <div><Icon name="drop" size={34} /><b>Miramos la lluvia</b><span>La lluvia de octubre y las cosechas conocidas de tu zona.</span></div>
-        <div><Icon name="leaf" size={34} /><b>Miramos tu zona</b><span>{info && !info.kAvailable ? "Aquí usamos las cosechas cercanas. Faltan imágenes para comparar el cultivo." : "Las cosechas cercanas y las imágenes del cultivo, cuando hay datos."}</span></div>
+        <div><Icon name="drop" size={34} /><b>Observamos la lluvia</b><span>La lluvia de octubre y las cosechas conocidas de tu zona.</span></div>
+        <div><Icon name="leaf" size={34} /><b>Observamos tu entorno</b><span>{info && !info.kAvailable ? "Las cosechas del municipio y las cercanas. Aquí no aplicamos el ajuste del cultivo." : "Las cosechas del municipio y las cercanas, con la señal del cultivo cuando hay datos."}</span></div>
       </div>
       <p className="equal-voices">Las dos cuentan por igual.</p>
       <div className="story-arrow" aria-hidden="true">↓</div>
@@ -372,11 +374,11 @@ export function ModelStory({ parcel }: { parcel: Parcel }) {
   );
 }
 
-export function ParcelReading({ parcel }: { parcel: Parcel }) {
+export function ParcelReading({ parcel, onReview }: { parcel: Parcel; onReview?: () => void }) {
   const [view, setView] = useState<"harvest" | "rain" | "crop">("harvest");
   const references = parcels.filter(p => p.yieldKind === "observed" && p.municipality === parcel.municipality && p.id !== parcel.id);
   const average = references.length ? references.reduce((sum, p) => sum + p.yield, 0) / references.length : null;
-  const delta = average === null ? null : parcel.yield - average;
+  const delta = average === null ? null : displayedDifference(parcel.yield, average);
   const max = Math.max(parcel.yield, average ?? 0, 1);
   const crop = parcelEvidence[parcel.id];
   const rain = modelEvidence.rainByParcel[parcel.id];
@@ -394,18 +396,17 @@ export function ParcelReading({ parcel }: { parcel: Parcel }) {
       </div>
       {view === "harvest" && <div className="reading-content">
         <h3>Frente a las cosechas de tu municipio</h3>
-        <div className="reading-yield-row"><span>{estimated ? "Tu estimación" : "Tu cosecha conocida"}<strong>{fmt(parcel.yield, 2)} t/ha</strong></span><div className="reading-yield-track"><i style={{ width: `${parcel.yield / max * 100}%` }} /></div></div>
+        <div className="reading-yield-row"><span>{estimated ? "Rendimiento estimado" : "Rendimiento conocido"}<strong>{fmt(parcel.yield, 2)} t/ha</strong></span><div className="reading-yield-track"><i style={{ width: `${parcel.yield / max * 100}%` }} /></div></div>
         {average !== null && delta !== null ? <>
-          <div className="reading-yield-row reference"><span>Cosechas conocidas<strong>{fmt(average, 2)} t/ha</strong></span><div className="reading-yield-track"><i style={{ width: `${average / max * 100}%` }} /></div></div>
-          <p className="reading-interpretation">{delta === 0 ? "La cifra coincide con el promedio de las cosechas conocidas." : <>{estimated ? "Se esperan" : "Se registraron"} <strong>{fmt(Math.abs(delta), 2)} toneladas por hectárea {delta > 0 ? "más" : "menos"}</strong> que ese promedio.</>}</p>
-          <div className="reading-action"><Icon name="help" size={23} /><p><strong>Para tu revisión</strong>{delta < 0 ? "Puedes empezar por las parcelas con menor cosecha prevista y revisar su lluvia y verdor con tu técnico." : "Antes de atribuir la diferencia al manejo, compara la lluvia y el verdor. Una cifra mayor no demuestra mejores prácticas."}</p></div>
-          {references.length === 1 && <p className="evidence-source">Con una sola referencia, la comparación es limitada. No basta para juzgar el desempeño de tu parcela.</p>}
+          <div className="reading-yield-row reference"><span>{references.length === 1 ? `${estimated ? '1' : 'Otra'} cosecha conocida` : `Promedio de ${estimated ? '' : 'otras '}${references.length} cosechas conocidas`}<strong>{fmt(average, 2)} t/ha</strong></span><p className="reference-place">{parcel.municipality}{!estimated && ' · sin incluir esta parcela'}</p><div className="reading-yield-track"><i style={{ width: `${average / max * 100}%` }} /></div></div>
+          <p className="reading-interpretation">{delta === 0 ? "La cifra mostrada coincide con esa referencia." : <>Son <strong>{fmt(Math.abs(delta), 2)} t/ha {delta > 0 ? "más" : "menos"}</strong> que esa referencia.</>}</p>
+          <div className="reading-action"><Icon name="help" size={23} /><div><p><strong>¿Qué puedes revisar?</strong>{estimated ? "Empieza por las parcelas con menor rendimiento estimado. Compara su lluvia y el verdor del cultivo con lo que observaste en campo y revísalo con tu técnico." : "Compara la lluvia y el verdor del cultivo con lo que observaste en campo y revísalo con tu técnico."}</p>{onReview && <button className="reading-review-link" onClick={onReview}>Ver parcelas para revisar<Icon name="chevron" size={17} /></button>}</div></div>
         </> : <p className="evidence-copy">No hay otras cosechas conocidas de este municipio para comparar. Podemos revisar la lluvia y las imágenes del cultivo.</p>}
       </div>}
       {view === "rain" && <div className="reading-content">
         <RainReference parcel={parcel} />
-        {delta !== null && <p className="reading-interpretation">{delta < 0 && rain.rainOctoberPct > 0 ? "Aquí hubo más lluvia en octubre y, aun así, la cifra de cosecha queda por debajo de la referencia municipal. Más agua no garantiza más grano." : <>La lluvia de octubre fue {rain.rainOctoberPct >= 0 ? "mayor" : "menor"} que en la referencia de tres años. La cifra de cosecha queda {delta >= 0 ? "por encima" : "por debajo"} de las cosechas conocidas del municipio. Son dos comparaciones distintas.</>}</p>}
-        <div className="reading-action"><Icon name="help" size={23} /><p><strong>Para tu revisión</strong>Contrasta esta diferencia de lluvia con las imágenes del cultivo y lo que observaste en campo. Estos datos no indican si faltó agua ni si hace falta regar.</p></div>
+        {delta !== null && <p className="reading-interpretation">En octubre {rain.rainOctoberPct === 0 ? "llovió lo mismo que" : `llovió ${rain.rainOctoberPct > 0 ? "más" : "menos"} que`} el promedio de 2022–2024. {delta < 0 && rain.rainOctoberPct > 0 ? "Sin embargo, el" : "El"} rendimiento {estimated ? "estimado" : "conocido"} {delta === 0 ? "coincide con el" : `está por ${delta > 0 ? "encima" : "debajo"} del`} promedio de las cosechas conocidas del municipio.</p>}
+        <div className="reading-action"><Icon name="help" size={23} /><p><strong>¿Qué puedes revisar?</strong>Compara la lluvia registrada y las imágenes del cultivo con lo que observaste en campo. Estos datos, por sí solos, no permiten saber si al cultivo le faltó humedad en el suelo ni determinar si necesitaba riego.</p></div>
       </div>}
       {view === "crop" && <div className="reading-content">
         <div className="green-peak"><Icon name="leaf" size={34} /><span>Mayor verdor observado<strong>{labelDate(crop.peak.date)} de 2025</strong></span></div>
@@ -494,12 +495,12 @@ export function ValidationPanel() {
           </text>
         </svg>
         <p className="plain-test-result">En estas pruebas, la diferencia media fue de <strong>{fmt(d.mae, 1)} toneladas por hectárea.</strong></p>
-        <p className="evidence-source">Cada punto compara una cosecha real con una estimación.</p>
+        <p className="evidence-source">{context === "represented" ? "El gráfico muestra una prueba; el resumen reúne las diez repeticiones." : "Cada punto compara una cosecha real con una estimación."}</p>
       </Disclosure>
   );
 }
 
-export function CompareParcels({ parcel }: { parcel: Parcel }) {
+export function CompareParcels({ parcel, accordionName }: { parcel: Parcel; accordionName?: string }) {
   const options = parcels.filter((p) => p.id !== parcel.id);
   const [otherId, setOtherId] = useState(
     () =>
@@ -508,25 +509,13 @@ export function CompareParcels({ parcel }: { parcel: Parcel }) {
       ).id,
   );
   const other = options.find((p) => p.id === otherId)!;
-  const difference =
-    Number(parcel.yield.toFixed(2)) - Number(other.yield.toFixed(2));
+  const difference = displayedDifference(parcel.yield, other.yield);
   return (
-    <Disclosure icon="map" title="Comparar dos cosechas" className="compare-panel">
-        <label className="comparison-picker">
-          Elige la otra parcela
-          <select
-            aria-label="Parcela para comparar"
-            value={otherId}
-            onChange={(e) => setOtherId(e.target.value)}
-          >
-            {options.map((p) => (
-              <option value={p.id} key={p.id}>
-                {p.id} · {p.state} ·{" "}
-                {p.yieldKind === "estimated" ? "estimado" : "conocido"}
-              </option>
-            ))}
-          </select>
-        </label>
+    <Disclosure name={accordionName} icon="map" title="Comparar dos cosechas" className="compare-panel">
+        <div className="comparison-picker"><ChoiceSelect label="Elige la otra parcela" title="Compara con otra cosecha"
+          ariaLabel="Parcela para comparar" value={otherId} onChange={setOtherId}
+          options={options.map(p => ({value: p.id, label: p.id,
+            description: `${p.municipality} · ${p.state} · ${p.yieldKind === 'estimated' ? 'Estimado' : 'Conocido'}`}))} /></div>
         <div className="comparison-pair">
           {[parcel, other].map((p) => (
             <div className="comparison-tile" key={p.id}>
@@ -540,7 +529,7 @@ export function CompareParcels({ parcel }: { parcel: Parcel }) {
                 {fmt(p.yield, 2)} <small>t/ha</small>
               </b>
               <span>{fmt(p.area, 2)} ha</span>
-              <span>{fmt(p.area * Number(p.yield.toFixed(2)))} t aprox.</span>
+              <span>{fmt(p.area * p.yield)} t aprox.</span>
             </div>
           ))}
         </div>
@@ -578,6 +567,7 @@ export function CompareParcels({ parcel }: { parcel: Parcel }) {
             </tr>
           </tbody>
         </table>
+        <p className="evidence-copy">Un verdor más alto indica más vegetación verde en las imágenes; no mide la cantidad de grano.</p>
       </Disclosure>
   );
 }

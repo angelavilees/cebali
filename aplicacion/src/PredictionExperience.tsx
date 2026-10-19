@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import Icon from './Icons';
 import type { IconName } from './Icons';
 import BarleyPlants from './BarleyPlants';
+import { displayedDifference } from './model/presentation';
 import type { Parcel } from './data/catalog';
 import type { CalculationStage, Estimate, FactorKey, ModelBundle } from './model/octG5';
 
@@ -13,16 +14,18 @@ const fmt = (n: number, digits = 2) => n.toLocaleString('es-MX', {
 const steps: { key: CalculationStage; icon: IconName; title: string; copy: string }[] = [
   { key: 'inputs', icon: 'map', title: 'Revisamos tu parcela', copy: 'Usamos sus mediciones preparadas del ciclo 2025.' },
   { key: 'rain', icon: 'drop', title: 'Comparamos la lluvia', copy: 'Relacionamos la lluvia de octubre con las cosechas conocidas de tu zona.' },
-  { key: 'neighbors', icon: 'pin', title: 'Miramos cosechas cercanas', copy: 'Las parcelas más próximas tienen más peso en esta parte del cálculo.' },
+  { key: 'neighbors', icon: 'pin', title: 'Observamos cosechas cercanas', copy: 'Las parcelas más próximas tienen más peso en esta parte del cálculo.' },
   { key: 'crop', icon: 'leaf', title: 'Revisamos la señal del cultivo', copy: 'Cuando hay datos, ajustamos la cifra con las imágenes de tu parcela y su entorno.' },
 ];
 type RunState = { status: 'idle' } | { status: 'running'; step: number; cropMissing?: boolean }
   | { status: 'ready'; estimate: Estimate } | { status: 'error' };
 
-export default function PredictionExperience({ parcel, children }: {
-  parcel: Parcel; children: (estimate: Estimate | null) => ReactNode;
+export default function PredictionExperience({ parcel, initialEstimate, onReady, children }: {
+  parcel: Parcel; initialEstimate?: Estimate; onReady?: (estimate: Estimate) => void;
+  children: (estimate: Estimate | null) => ReactNode;
 }) {
-  const [run, setRun] = useState<RunState>({ status: 'idle' });
+  const [run, setRun] = useState<RunState>(() => initialEstimate?.id === parcel.id && initialEstimate.modelId === 'OCT_G5 1.5.0'
+    ? { status: 'ready', estimate: initialEstimate } : { status: 'idle' });
   const controller = useRef<AbortController | null>(null);
   const releasePause = useRef<(() => void) | null>(null);
   const fast = useRef(false);
@@ -58,6 +61,7 @@ export default function PredictionExperience({ parcel, children }: {
         if (active.signal.aborted) return;
         step = calculation.next();
       }
+      onReady?.(step.value);
       setRun({ status: 'ready', estimate: step.value });
     } catch {
       if (!active.signal.aborted) setRun({ status: 'error' });
@@ -125,7 +129,7 @@ export function EstimateBreakdown({ estimate: e, parcel }: { estimate: Estimate;
   const largest = ranked[0];
   const largestValue = e.contributions[largest.key];
   const max = Math.max(.005, ...Object.values(e.contributions).map(Math.abs));
-  const delta = e.yield - e.referenceBase;
+  const delta = displayedDifference(e.yield, e.referenceBase);
   return <section className="evidence-card estimate-breakdown">
     <h2><Icon name="chart" />¿Qué movió esta estimación?</h2>
     <p className="evidence-copy">Combinamos las cosechas de tu zona y de {parcel.municipality}, y ajustamos con los datos de tu parcela.</p>

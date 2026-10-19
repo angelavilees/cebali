@@ -1,9 +1,12 @@
 import { useId, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Icon from './Icons';
+import { revealDisclosure } from './components/ui/revealDisclosure';
 import runtime from './model/oct-g5-runtime.json';
 import support from './model/rain-support.json';
 import { rainRange, simulateRain } from './model/rainScenarios';
+import { MODEL_ID } from './model/octG5';
+import { displayedDifference } from './model/presentation';
 import type { Estimate, ModelBundle } from './model/octG5';
 import type { Parcel } from './data/catalog';
 
@@ -12,16 +15,16 @@ const fmt = (value: number, digits = 2) => value.toLocaleString('es-MX', {
   minimumFractionDigits: digits, maximumFractionDigits: digits,
 });
 
-export default function RainExplorer({ parcel, estimate }: { parcel: Parcel; estimate: Estimate }) {
+export default function RainExplorer({ parcel, estimate, accordionName }: { parcel: Parcel; estimate: Estimate; accordionName?: string }) {
   const id = useId();
   const [selectedRain, setSelectedRain] = useState<number | null>(null);
   const input = bundle.inputs.find(row => row.ID_POLIGONO === parcel.id);
-  if (!input || estimate.id !== parcel.id) return null;
+  if (!input || estimate.modelId !== MODEL_ID || estimate.id !== parcel.id) return null;
   const range = rainRange(input, support);
   const rain = selectedRain ?? input.P;
   const scenario = range ? simulateRain(bundle, input, rain, support) : null;
   const changed = Math.abs(rain - input.P) > 1e-8;
-  const difference = (scenario?.yield ?? estimate.yield) - estimate.yield;
+  const difference = displayedDifference(scenario?.yield ?? estimate.yield, estimate.yield);
   const rainDifference = rain - input.P;
   const position = range ? (rain - range.min) / (range.max - range.min) * 100 : 0;
   const chartMax = Math.ceil(Math.max(estimate.yield, scenario?.yield ?? 0,
@@ -30,7 +33,7 @@ export default function RainExplorer({ parcel, estimate }: { parcel: Parcel; est
     ? changed ? 'Cambio menor a 0.01 t/ha' : 'Mismo resultado'
     : `${difference > 0 ? '+' : '−'}${fmt(Math.abs(difference))} t/ha en el cálculo`;
 
-  return <details className="rain-explorer">
+  return <details className="rain-explorer" name={accordionName} onToggle={event => revealDisclosure(event.currentTarget)}>
     <summary>
       <span className="rain-summary-icon"><Icon name="drop" size={25} /></span>
       <span><strong>Explora tu estimación</strong><span>¿Y si hubiera llovido diferente?</span></span>
