@@ -9,7 +9,7 @@ leer_y_unir_datos <- function(carpeta_datos, carpeta_paquete) {
   comprobar_dependencias()
   archivo <- function(nombre) file.path(carpeta_datos, nombre)
   objetivo <- archivo("ID_area_rendimiento_70_30_Reto_AgroCebada.csv")
-  basico <- archivo("BASICO_AgroCebada2026.csv")
+  basico <- archivo("Conjunto_datos_BASICO_AgroCebada2026.csv")
   shp <- archivo("Parcelas_Reto_AGC_CONJUNTO_70_30/Parcelas_Reto_AGC_CONJUNTO.shp")
   requeridos <- c(objetivo, basico,
                  paste0(sub("\\.shp$", "", shp), c(".shp", ".shx", ".dbf", ".prj")))

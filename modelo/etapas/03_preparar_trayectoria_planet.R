@@ -1,6 +1,6 @@
 # Etapa 3. Filtrar Planet, suavizar NDVI e integrar el verdor sobre la base.
 preparar_trayectoria_planet <- function(d) {
-  pro <- file.path(d$carpeta_datos, "PRO_AgroCebada.csv")
+  pro <- file.path(d$carpeta_datos, "Conjunto_datos_PRO_AgroCebada.csv")
   campos <- c("ID_POLIGONO", "fecha_captura", "sensor",
               "ndvi_promedio", "porcentaje_nubosidad")
   raw <- readr::read_csv(pro, col_select = tidyselect::all_of(campos),

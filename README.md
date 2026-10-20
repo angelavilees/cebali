@@ -107,18 +107,44 @@ Si el sistema compila `sf` o `terra` desde sus fuentes, también necesita las bi
 
 ### Archivos de entrada
 
-Se leen desde la carpeta oficial del participante, conservando esta estructura:
+Descomprime el ZIP oficial `DataSet (1).zip`. La carpeta que contiene es **`DATASET_RETO_AGRO_2026`**, y los CSV conservan sus nombres originales: **no hay que renombrarlos**.
+
+Dentro de esa carpeta, extrae los dos ZIP que utiliza el modelo:
+
+1. `Parcelas_Reto_AGC_CONJUNTO_70_30.zip`: sus archivos SHP, SHX, DBF, PRJ y CPG deben quedar dentro de `Parcelas_Reto_AGC_CONJUNTO_70_30/`.
+2. `Reto_AgroCebada_CHIRPS_Precipitacion_2022_2025.zip`: extráelo en `DATASET_RETO_AGRO_2026/`. Este ZIP ya contiene la carpeta `Reto_AgroCebada_CHIRPS_Precipitacion_2022_2025`; no agregues otra carpeta con el mismo nombre.
+
+Para obtener exactamente esas rutas en cualquier sistema con R, después de extraer el ZIP principal puedes ejecutar una vez:
+
+```r
+datos <- "/ruta/DATASET_RETO_AGRO_2026"
+unzip(
+  file.path(datos, "Parcelas_Reto_AGC_CONJUNTO_70_30.zip"),
+  exdir = file.path(datos, "Parcelas_Reto_AGC_CONJUNTO_70_30"),
+  overwrite = FALSE
+)
+unzip(
+  file.path(datos, "Reto_AgroCebada_CHIRPS_Precipitacion_2022_2025.zip"),
+  exdir = datos,
+  overwrite = FALSE
+)
+```
+
+La estructura de las entradas necesarias queda así; los ZIP y los demás archivos oficiales pueden permanecer en la misma carpeta:
 
 ```text
-DATASET_RETO_AGRO_2026-2/
+DATASET_RETO_AGRO_2026/
 ├── ID_area_rendimiento_70_30_Reto_AgroCebada.csv
-├── BASICO_AgroCebada2026.csv
-├── PRO_AgroCebada.csv
+├── Conjunto_datos_BASICO_AgroCebada2026.csv
+├── Conjunto_datos_PRO_AgroCebada.csv
+├── Parcelas_Reto_AGC_CONJUNTO_70_30.zip
+├── Reto_AgroCebada_CHIRPS_Precipitacion_2022_2025.zip
 ├── Parcelas_Reto_AGC_CONJUNTO_70_30/
 │   ├── Parcelas_Reto_AGC_CONJUNTO.shp
 │   ├── Parcelas_Reto_AGC_CONJUNTO.shx
 │   ├── Parcelas_Reto_AGC_CONJUNTO.dbf
-│   └── Parcelas_Reto_AGC_CONJUNTO.prj
+│   ├── Parcelas_Reto_AGC_CONJUNTO.prj
+│   └── Parcelas_Reto_AGC_CONJUNTO.cpg
 └── Reto_AgroCebada_CHIRPS_Precipitacion_2022_2025/
     └── Precipitacion_mensual/
         ├── 2022/PREC_2022_10.tif
@@ -127,7 +153,9 @@ DATASET_RETO_AGRO_2026-2/
         └── 2025/PREC_2025_10.tif
 ```
 
-BASICO aporta únicamente la columna de identificadores que conserva el orden utilizado al construir particiones internas. Sus mediciones, los mapas de temperatura y los otros meses de precipitación no son necesarios para reconstruir esta receta final. No se deben sustituir archivos por datos de otra campaña.
+`Conjunto_datos_BASICO_AgroCebada2026.csv` aporta únicamente la columna de identificadores que conserva el orden utilizado al construir particiones internas. Planet se lee de `Conjunto_datos_PRO_AgroCebada.csv`. Sus contenidos coinciden con las entradas de la corrida archivada, aunque entonces los CSV estaban nombrados `BASICO_AgroCebada2026.csv` y `PRO_AgroCebada.csv`; esos nombres antiguos aparecen solo como procedencia en `modelo/resultados/huellas_entradas.csv`, no son los que deben prepararse ahora.
+
+Las mediciones de BASICO, los mapas de temperatura, topografía y los otros meses de precipitación no son necesarios para reconstruir esta receta final. No hace falta extraer los ZIP de temperatura o topografía. No se deben sustituir archivos por datos de otra campaña.
 
 ### Comprobación rápida del artefacto guardado
 
@@ -142,7 +170,7 @@ No requiere los TIFF originales: comprueba la inferencia de las 59 entradas prep
 Desde la raíz del repositorio:
 
 ```sh
-Rscript modelo/ejecutar_por_etapas.R "/ruta/DATASET_RETO_AGRO_2026-2" "/ruta/resultados_nuevos"
+Rscript modelo/ejecutar_por_etapas.R "/ruta/DATASET_RETO_AGRO_2026" "/ruta/resultados_nuevos"
 ```
 
 La carpeta de salida debe ser **nueva y no existir todavía**. El script crea esa carpeta; no debe apuntar a `modelo/resultados/` ni a la carpeta de datos originales.
@@ -152,7 +180,7 @@ El programa prepara las entradas, aprende el modelo con las 138 conocidas, gener
 ### Alternativa: script integrado
 
 ```sh
-Rscript modelo/modelo_completo.R "/ruta/DATASET_RETO_AGRO_2026-2" "/ruta/otros_resultados_nuevos"
+Rscript modelo/modelo_completo.R "/ruta/DATASET_RETO_AGRO_2026" "/ruta/otros_resultados_nuevos"
 ```
 
 Es otra forma de ejecutar **el mismo modelo**. Conserva `contratos/` y `referencias/` junto al script. Las dos opciones producen resultados equivalentes; no es necesario ejecutar ambas para utilizar el proyecto.

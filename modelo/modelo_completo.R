@@ -10,7 +10,7 @@ leer_y_unir_datos <- function(carpeta_datos, carpeta_paquete) {
   comprobar_dependencias()
   archivo <- function(nombre) file.path(carpeta_datos, nombre)
   objetivo <- archivo("ID_area_rendimiento_70_30_Reto_AgroCebada.csv")
-  basico <- archivo("BASICO_AgroCebada2026.csv")
+  basico <- archivo("Conjunto_datos_BASICO_AgroCebada2026.csv")
   shp <- archivo("Parcelas_Reto_AGC_CONJUNTO_70_30/Parcelas_Reto_AGC_CONJUNTO.shp")
   requeridos <- c(objetivo, basico,
                  paste0(sub("\\.shp$", "", shp), c(".shp", ".shx", ".dbf", ".prj")))
@@ -78,7 +78,7 @@ extraer_lluvia_octubre <- function(d) {
 }
 # Etapa 3. Filtrar Planet, suavizar NDVI e integrar el verdor sobre la base.
 preparar_trayectoria_planet <- function(d) {
-  pro <- file.path(d$carpeta_datos, "PRO_AgroCebada.csv")
+  pro <- file.path(d$carpeta_datos, "Conjunto_datos_PRO_AgroCebada.csv")
   campos <- c("ID_POLIGONO", "fecha_captura", "sensor",
               "ndvi_promedio", "porcentaje_nubosidad")
   raw <- readr::read_csv(pro, col_select = tidyselect::all_of(campos),
