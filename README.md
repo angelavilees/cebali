@@ -233,18 +233,31 @@ Temperatura, relieve, curva Sentinel-2 y superficie se muestran como contexto; n
 
 ## 5. Resultados y evaluación
 
-| Evaluación del modelo final | RMSE (t/ha) | MAE (t/ha) |
-| --- | ---: | ---: |
-| Local: cinco particiones, diez repeticiones | 0.474087 | 0.323841 |
-| Espacial estricta: cinco particiones | 0.706840 | 0.564809 |
+Las métricas principales dan **igual peso a cada parcela**, como en el informe y el anexo técnico de la entrega.
 
-RMSE y MAE se ponderan por la composición municipal de las 59 consultas. El RMSE local principal es el promedio de los diez RMSE globales por repetición. La prueba espacial reúne las predicciones externas antes de calcular el error. Las repeticiones no generan nuevas parcelas independientes: siguen siendo 138 cosechas conocidas.
+| Evaluación del modelo final, sin ponderación | RMSE (t/ha) | MAE (t/ha) | R² |
+| --- | ---: | ---: | ---: |
+| Local: cinco particiones, diez repeticiones | 0.4728 | 0.3197 | 0.6892 |
+| Espacial estricta: cinco particiones | 0.7140 | 0.5728 | 0.2912 |
 
-R² ponderado agrupado: **0.699464 local** y **0.331999 espacial**. No son porcentajes de precisión.
+El RMSE local es el promedio de los diez RMSE globales por repetición; MAE y R² reúnen las predicciones reservadas. La prueba espacial reúne las predicciones externas antes de calcular las métricas. Las repeticiones no generan nuevas parcelas independientes: siguen siendo 138 cosechas conocidas. R² no representa un porcentaje de precisión.
 
-En 100 divisiones estratificadas 103/35 y 100 aleatorias, el RMSE fue 0.474747 y 0.473307. Frente a la versión municipal se obtuvo menor RMSE en 81 de las 100 divisiones de cada batería. La mejora principal fue de aproximadamente 0.63%; las divisiones reutilizan los mismos 138 rendimientos. La elección prioriza las 59 consultas representadas, sin afirmar superioridad universal.
+Sin ponderación, la mejora local frente a la versión municipal fue de aproximadamente 0.4%. En las comprobaciones de 100 divisiones estratificadas 103/35 y 100 aleatorias, G5 obtuvo menor RMSE en 69 y 76 divisiones, respectivamente. Son comparaciones solapadas de las mismas 138 cosechas, no pruebas independientes ni probabilidades de ganar.
 
-Cada evaluación vuelve a aprender sus referencias, escalas, selección de lluvia y correcciones dentro del entrenamiento. Los grupos espaciales conectan parcelas por celdas climáticas compartidas y se separan completos. Los intervalos nominales del 80% se comprueban en particiones con entrenamiento, calibración y evaluación separados, midiendo cobertura y amplitud. Cobertura ponderada observada: **85.23% local y 70.87% espacial**; anchuras medias 1.229124 y 1.750185 t/ha. La menor cobertura espacial es una limitación declarada de transferencia. No se presentan como intervalos individuales certificados para el ajuste completo de las 59 consultas.
+### Diagnóstico complementario con ponderación municipal
+
+Este cálculo pondera por la composición municipal de las 59 consultas, **no por superficie**, y se mantiene separado de las métricas principales:
+
+| Evaluación ponderada | RMSE (t/ha) | MAE (t/ha) | R² agrupado |
+| --- | ---: | ---: | ---: |
+| Local: cinco particiones, diez repeticiones | 0.474087 | 0.323841 | 0.699464 |
+| Espacial estricta: cinco particiones | 0.706840 | 0.564809 | 0.331999 |
+
+En las baterías ponderadas de 100 divisiones estratificadas 103/35 y 100 aleatorias, el RMSE fue 0.474747 y 0.473307; G5 obtuvo menor RMSE que la versión municipal en 81 divisiones de cada batería. La mejora local ponderada fue de aproximadamente 0.63%. Estas cifras corresponden a ese diagnóstico y no deben confundirse con las comparaciones sin ponderar. La elección prioriza las 59 consultas representadas, sin afirmar superioridad universal.
+
+### Validación e intervalos
+
+Cada evaluación vuelve a aprender sus referencias, escalas, selección de lluvia y correcciones dentro del entrenamiento. Los grupos espaciales conectan parcelas por celdas climáticas compartidas y se separan completos. Los intervalos nominales del 80% se comprueban en particiones con entrenamiento, calibración y evaluación separados, midiendo cobertura y amplitud. **Sin ponderación**, la cobertura observada fue **85.87% local y 69.57% espacial**, con anchuras medias de 1.231 y 1.690 t/ha. En el diagnóstico ponderado municipal fue **85.23% y 70.87%**, con anchuras de 1.229124 y 1.750185 t/ha. La menor cobertura espacial es una limitación declarada de transferencia. No se presentan como intervalos individuales certificados para el ajuste completo de las 59 consultas.
 
 Estos resultados corresponden a una receta elegida después de explorar alternativas sobre las mismas etiquetas; no constituyen un test independiente de toda la búsqueda. El error de las 59 parcelas sigue desconocido y no se ha demostrado generalización a otros años ni pronóstico anterior a octubre.
 
@@ -303,9 +316,9 @@ La mascota de bienvenida `aplicacion/public/cebali-mascot.webp` se generó con a
 
 ## 9. Documentación complementaria de la entrega
 
-Las bases solicitan identificar el uso de inteligencia artificial e incluir sus prompts en el escrito, además de las aportaciones de cada integrante en anexos. Hubo apoyo de IA en programación, exploración, revisión y documentación; su declaración y los prompts utilizados deben acompañar el informe técnico, sin sustituir la revisión del equipo.
+Las bases solicitan identificar el uso de inteligencia artificial e incluir sus prompts en el escrito, además de las aportaciones de cada integrante en anexos. Hubo apoyo de IA en programación, exploración, revisión y documentación. El anexo técnico de la entrega presenta las consultas de apoyo al modelo, las herramientas y sus propósitos en la página 3, y las aportaciones de los integrantes en la página 4. El apoyo de IA no sustituye la revisión del equipo.
 
-Este repositorio se mantiene privado para revisión del equipo. Antes de entregar, el código y la aplicación deben quedar accesibles al jurado mediante el mecanismo elegido. Publicar código no sustituye el envío del informe, bibliografía, anexos, video y CSV por los medios indicados por el Comité Organizador.
+Este repositorio es público y permite al jurado consultar el código del modelo y de la aplicación, junto con las instrucciones para ejecutarlos. La aplicación está disponible en [cebali.pages.dev](https://cebali.pages.dev/). Publicar código no sustituye el envío del informe, bibliografía, anexos, video y CSV por los medios indicados por el Comité Organizador.
 
 ## 10. Integridad y alcance de la carpeta
 
